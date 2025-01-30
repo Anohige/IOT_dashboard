@@ -1,14 +1,5 @@
 [
   {
-    "expression": "condition  = SUM(sensor1, sensor2)\nx = SUB(sensor1, sensor1) >= 10\nIF conditon > 9 THEN \nalert.sms\nELSEIF x\nalert.web\nENDIF"
-  },
-  {
-    "expression": "condition  = SUM(sensor1, sensor2)\nx = SUB(sensor1, sensor1) >= 10\nIF conditon >10 THEN \nalert.sms\nELSEIF x\nalert.web\nENDIF"
-  },
-  {
-    "expression": "condition  = SUM(sensor1, sensor2)\nx = SUB(sensor1, sensor2) >= 10\nIF conditon >10 \nTHEN \nalert.sms\nELSEIF x\nalert.web\nENDIF"
-  },
-  {
-    "expression": "condition  = SUM(sensor1, sensor2)\nx = SUB(sensor1, sensor2) >= 10\nIF conditon >10 THEN\nalert.sms\nELSEIF x\nalert.web\nENDIF"
+    "expression": "IF(sensor1 > 10) THEN\nalert.sms\nENDIF"
   }
 ]

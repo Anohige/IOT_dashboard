@@ -166,22 +166,23 @@ class RuleEngine:
         if block_stack:
             raise ValueError(f"Unmatched IF/ENDIF block: {block_stack}")
 
-        for action in execute_actions:
-            if action == "alert.email":
-                print("Email sent")
-            elif action == "alert.sms":
-                print("SMS sent")
-            elif action == "alert.mail":
-                print("Mail sent")
-            elif action == "alert.web":
-                print("WEB ALERT sent")
-            else:
-                print("Unidentified action")
+        if execute_actions:
+            for action in execute_actions:
+                if action == "alert.email":
+                    print("Email sent")
+                elif action == "alert.sms":
+                    print("SMS sent")
+                elif action == "alert.mail":
+                    print("Mail sent")
+                elif action == "alert.web":
+                    print("WEB ALERT sent")
+                else:
+                    print("Unidentified action")
+            return execute_actions
+        else:
+            return "Condition was not satisfied"
 
-        return execute_actions
 
-
-
-"""
+""" 
 Final
 """
