@@ -11,6 +11,9 @@ def main():
     print("Starting MQTT client in non-blocking mode...")
     di.mqtt_client.connect_and_loop()  # This will call loop_start()
 
+    print("Connecting to DAQ...")
+    di.start_daq()
+
     # Create or instantiate your RuleAgent.
     # (If the agent depends on incoming MQTT data,
     #  make sure that data is stored or accessible.)
@@ -18,10 +21,16 @@ def main():
 
     try:
         while True:
-            # Evaluate rules every 5 seconds
-            agent.start()  # load_rules() + evaluate_rules()
-            print("Rules evaluation done. Sleeping 5 seconds...")
-            time.sleep(10)
+            choice = input("Do you want to evaluate rules (Y/N):").strip().lower()
+            if choice == "y":
+                agent.start()  # load_rules() + evaluate_rules()
+                print("Rules evaluation done. Sleeping 5 seconds...")
+                time.sleep(5)
+            elif choice == "n":
+                print("Ok waiting 10 secs.....")
+                time.sleep(10)
+            else:
+                print("Invalid input. Please try again.")
     except KeyboardInterrupt:
         print("Shutting down...")
 
