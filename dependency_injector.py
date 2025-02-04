@@ -31,3 +31,4 @@ class DependencyInjector:
         Start the DAQ
         """
         print(f"Raspberry Pi Serial: {self.daq.serial_number}")
+        self.daq.store_to_db()

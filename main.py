@@ -21,7 +21,7 @@ def main():
 
     try:
         while True:
-            choice = input("Do you want to evaluate rules (Y/N):").strip().lower()
+            choice = input("Do you want to evaluate rules (Y/N): \n").strip().lower()
             if choice == "y":
                 agent.start()  # load_rules() + evaluate_rules()
                 print("Rules evaluation done. Sleeping 5 seconds...")
