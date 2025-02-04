@@ -14,7 +14,7 @@ class daq:
         self.user = ""
         self.password = ""
         self.database = ""
-        self.port = 3306
+        self.port = ""
 
     def get_rpi_serial(self):
         """
