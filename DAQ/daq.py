@@ -74,7 +74,7 @@ class daq:
                     # Not in DB, insert new row
                     unique_id = f"dev_{uuid.uuid4()}"
                     insert_query = """
-                        INSERT INTO iot_devices (unique_id, pi_serial)
+                        INSERT INTO iot_devices (unique_id, device_serial)
                         VALUES (%s, %s)
                     """
                     cursor.execute(insert_query, (unique_id, self.serial_number))
