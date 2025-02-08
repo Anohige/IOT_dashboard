@@ -62,7 +62,7 @@ class daq:
                 select_query = """
                     SELECT COUNT(*)
                     FROM iot_devices
-                    WHERE pi_serial = %s
+                    WHERE device_serial = %s
                 """
                 cursor.execute(select_query, (self.serial_number,))
                 (count,) = cursor.fetchone()
