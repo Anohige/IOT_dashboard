@@ -4,7 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e71a34ca-43b5-484d-976b-df1fe0f1576e" name="Changes" comment="Changes to daq" />
+    <list default="true" id="e71a34ca-43b5-484d-976b-df1fe0f1576e" name="Changes" comment="changes">
+      <change afterPath="$PROJECT_DIR$/stats/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/stats/system_stats.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DAQ/daq.py" beforeDir="false" afterPath="$PROJECT_DIR$/DAQ/daq.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mqtt/mqtt_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/mqtt/mqtt_client.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -119,6 +125,7 @@
       <workItem from="1738686053783" duration="4197000" />
       <workItem from="1738760873429" duration="4113000" />
       <workItem from="1738782171638" duration="236000" />
+      <workItem from="1739024264483" duration="3634000" />
     </task>
     <task id="LOCAL-00001" summary="first commit">
       <option name="closed" value="true" />
@@ -184,7 +191,23 @@
       <option name="project" value="LOCAL" />
       <updated>1738783258101</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="changes">
+      <option name="closed" value="true" />
+      <created>1739024348892</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1739024348892</updated>
+    </task>
+    <task id="LOCAL-00010" summary="changes">
+      <option name="closed" value="true" />
+      <created>1739024970921</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1739024970921</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -207,7 +230,8 @@
     <MESSAGE value="Adding daq" />
     <MESSAGE value="Adding requirements.txt" />
     <MESSAGE value="Changes to daq" />
-    <option name="LAST_COMMIT_MESSAGE" value="Changes to daq" />
+    <MESSAGE value="changes" />
+    <option name="LAST_COMMIT_MESSAGE" value="changes" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
