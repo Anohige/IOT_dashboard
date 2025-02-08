@@ -10,11 +10,11 @@ class daq:
 
     def __init__(self):
         self.serial_number = self.get_rpi_serial()
-        self.host = ""
-        self.user = ""
-        self.password = ""
-        self.database = ""
-        self.port = ""
+        self.host = "iot-dash.cdy2qm0ae3d1.eu-north-1.rds.amazonaws.com"
+        self.user = "anirudh"
+        self.password = "Aswani0316"
+        self.database = "iot_dashboard"
+        self.port = 3306
 
     def get_rpi_serial(self):
         """
