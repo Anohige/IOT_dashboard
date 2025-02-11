@@ -6,7 +6,7 @@ import sys
 # 1) Import your classes
 from File_manager.file_manager import FileManager
 from mqtt.mqtt_client import MqttClient
-from DAQ. daq import daq
+from DAQ. daq import DAQ
 
 class DependencyInjector:
     """
@@ -19,7 +19,7 @@ class DependencyInjector:
 
         # 3) Instantiate MqttClient, injecting file_manager
         self.mqtt_client = MqttClient(file_manager=self.file_manager)
-        self.daq = daq()
+        self.daq = DAQ()
 
     def start_mqtt_client(self):
         """

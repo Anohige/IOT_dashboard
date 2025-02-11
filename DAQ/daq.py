@@ -1,8 +1,6 @@
-# daq.py
-
 from DB_Manager.db_manager import DBManager
 
-class daq:
+class DAQ:
     """
     A class for DAQ operations (e.g., retrieving Raspberry Pi serial number)
     and storing it in the database.
@@ -27,6 +25,8 @@ class daq:
                         if len(parts) == 2:
                             cpuserial = parts[1].strip()
                             break
+        except FileNotFoundError:
+            print("[DAQ] Warning: /proc/cpuinfo not found. Not running on Raspberry Pi?")
         except Exception as e:
             print(f"[DAQ] Could not read /proc/cpuinfo: {e}")
         return cpuserial
@@ -41,9 +41,9 @@ class daq:
             return
 
         # Check if serial exists
-        query = "SELECT COUNT(*) FROM iot_devices WHERE device_serial = %s"
+        query = "SELECT COUNT(*) AS count FROM iot_devices WHERE device_serial = %s"
         result = self.db.execute_query(query, (self.serial_number,), fetch=True)
-        count = result[0][0] if result else 0
+        count = result[0]["count"] if result else 0
 
         if count > 0:
             print(f"[DAQ] Pi serial '{self.serial_number}' already exists in DB. Skipping insertion.")
@@ -53,4 +53,4 @@ class daq:
             self.db.execute_query(query, (self.serial_number,))
             print(f"[DAQ] Inserted Pi serial '{self.serial_number}' into the database.")
 
-        self.db.close()  # Close DB connection
+        # Do not close DB connection here, let it persist for reuse
