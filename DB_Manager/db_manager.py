@@ -1,4 +1,5 @@
 import pymysql
+from pymysql.cursors import DictCursor
 
 class DBManager:
     """
@@ -9,10 +10,10 @@ class DBManager:
         """
         Initializes the database connection.
         """
-        self.host = "your-host"
-        self.user = "your-user"
-        self.password = "your-password"
-        self.database = "your-database"
+        self.host = "iot-dash.cdy2qm0ae3d1.eu-north-1.rds.amazonaws.com"
+        self.user = "anirudh"
+        self.password = "Cheaper16townhall"
+        self.database = "iot_dashboard"
         self.port = 3306  # Ensure this is an integer, not a string
         self.connection = None
 

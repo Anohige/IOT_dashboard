@@ -1,12 +1,10 @@
 # dependency_injector.py
 
-import os
-import sys
-
 # 1) Import your classes
 from File_manager.file_manager import FileManager
-from mqtt.mqtt_client import MqttClient
+from connection.mqtt.mqtt_client import MqttClient
 from DAQ. daq import DAQ
+from connection.server.server import Server
 
 class DependencyInjector:
     """
@@ -20,6 +18,7 @@ class DependencyInjector:
         # 3) Instantiate MqttClient, injecting file_manager
         self.mqtt_client = MqttClient(file_manager=self.file_manager)
         self.daq = DAQ()
+        self.server = Server()
 
     def start_mqtt_client(self):
         """
@@ -32,3 +31,6 @@ class DependencyInjector:
         """
         print(f"Raspberry Pi Serial: {self.daq.serial_number}")
         self.daq.store_to_db()
+
+    def start_server(self):
+        self.server.run()
