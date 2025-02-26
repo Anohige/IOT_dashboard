@@ -1,31 +1,24 @@
 from flask import Flask, jsonify, request
-from flask_cors import CORS  # Only needed if your frontend is on a different origin
+from flask_cors import CORS
 from DB_Manager.db_manager import DBManager
 
 class Server:
     def __init__(self):
         self.app = Flask(__name__)
-        CORS(self.app)  # Enable CORS if needed
+        CORS(self.app)  # Enable CORS for cross-origin requests
         self.db_manager = DBManager()
 
+        # GET endpoint for devices
         @self.app.route('/devices', methods=['GET'])
         def get_devices():
-            """
-            Returns a list of all devices in the 'devices' table.
-            """
             query = "SELECT * FROM devices"
             results = self.db_manager.execute_query(query, fetch=True)
-            # If 'results' is None or empty, return an empty list
             return jsonify(results if results else []), 200
 
-        # Example: If you want to add a route to create a new device
-        # (assuming you handle form data or JSON from the frontend)
+        # POST endpoint to create a new device in the "devices" table
         @self.app.route('/devices', methods=['POST'])
         def create_device():
-            """
-            Creates a new device in the 'devices' table based on JSON data from the frontend.
-            """
-            data = request.json  # e.g., { "name": "...", "type": "...", etc. }
+            data = request.json
             if not data:
                 return jsonify({"error": "No data provided"}), 400
 
@@ -44,8 +37,12 @@ class Server:
             self.db_manager.execute_query(query, values=values, fetch=False)
             return jsonify({"message": "Device created successfully"}), 201
 
+        # Endpoint to fetch available device serials from the "iot_devices" table
+        @self.app.route('/iot_devices', methods=['GET'])
+        def get_iot_devices():
+            query = "SELECT * FROM iot_devices"
+            results = self.db_manager.execute_query(query, fetch=True)
+            return jsonify(results if results else []), 200
+
     def run(self, host='0.0.0.0', port=5001):
-        """
-        Runs the Flask server.
-        """
         self.app.run(host=host, port=port, debug=True)

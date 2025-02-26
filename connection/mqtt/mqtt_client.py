@@ -10,6 +10,7 @@ import threading
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from File_manager.file_manager import FileManager
 from stats.system_stats import SystemStats
+from DAQ.daq import DAQ
 
 class MqttClient:
     """
@@ -43,6 +44,7 @@ class MqttClient:
 
         self.file_manager = file_manager if file_manager else FileManager()
         self.system_stats = SystemStats()
+        self.daq = DAQ()
 
     def connect_and_loop(self):
         """Connect to the MQTT broker and start a non-blocking loop."""
@@ -89,6 +91,9 @@ class MqttClient:
         while True:
             stats = self.system_stats.get_system_stats()
             if stats:
+                # Include device_serial in the payload
+                #stats["device_serial"] = self.daq.get_rpi_serial()
+                stats["device_serial"] = "58969696969"
                 payload = json.dumps(stats)
                 self.client.publish(self.stats_topic, payload)
                 print(f"[MQTT] Published System Stats: {payload}")
