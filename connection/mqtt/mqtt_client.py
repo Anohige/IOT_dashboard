@@ -91,8 +91,8 @@ class MqttClient:
         while True:
             stats = self.system_stats.get_system_stats()
             if stats:
-                # Include device_serial in the payload
-                #stats["device_serial"] = self.daq.get_rpi_serial()
+                # Include device_serial in the payload.
+                # For testing, we set it to a fixed value.
                 stats["device_serial"] = "58969696969"
                 payload = json.dumps(stats)
                 self.client.publish(self.stats_topic, payload)
