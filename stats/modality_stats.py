@@ -13,8 +13,8 @@ class Modality_stats:
     def fetch_stats(self):
         try:
             while True:
-                self.temperature = self.device.read_temperature()
-                self.humidity = self.device.read_humidity()
+                self.temperature = self.device.temperature()
+                self.humidity = self.device.humidity()
                 print(F"Temperature: {self.temperature} C Humidity: {self.humidity}%")
                 time.sleep(1)
         except RuntimeError as e:
