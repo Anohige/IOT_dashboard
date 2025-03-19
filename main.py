@@ -17,6 +17,9 @@ def main():
     print("Starting Server...")
     di.start_server()
 
+    print("Getting mods...")
+    di.get_modalities()
+
     # Create or instantiate your RuleAgent.
     # (If the agent depends on incoming MQTT data,
     #  make sure that data is stored or accessible.)

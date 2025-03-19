@@ -4,11 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e71a34ca-43b5-484d-976b-df1fe0f1576e" name="Changes" comment="Modified mqtt">
-      <change afterPath="$PROJECT_DIR$/stats/modality_stats.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-    </list>
+    <list default="true" id="e71a34ca-43b5-484d-976b-df1fe0f1576e" name="Changes" comment="added modality_stats.py" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -145,7 +141,7 @@
       <workItem from="1741787534162" duration="3472000" />
       <workItem from="1741803759608" duration="1059000" />
       <workItem from="1741984081523" duration="1915000" />
-      <workItem from="1742402456037" duration="2739000" />
+      <workItem from="1742402456037" duration="3108000" />
     </task>
     <task id="LOCAL-00001" summary="first commit">
       <option name="closed" value="true" />
@@ -291,7 +287,15 @@
       <option name="project" value="LOCAL" />
       <updated>1741985149771</updated>
     </task>
-    <option name="localTasksCounter" value="19" />
+    <task id="LOCAL-00019" summary="added modality_stats.py">
+      <option name="closed" value="true" />
+      <created>1742405898772</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1742405898772</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -321,7 +325,8 @@
     <MESSAGE value="changes requirements" />
     <MESSAGE value="Added server" />
     <MESSAGE value="Modified mqtt" />
-    <option name="LAST_COMMIT_MESSAGE" value="Modified mqtt" />
+    <MESSAGE value="added modality_stats.py" />
+    <option name="LAST_COMMIT_MESSAGE" value="added modality_stats.py" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
