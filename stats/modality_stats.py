@@ -30,7 +30,7 @@ class Modality_stats:
             try:
                 temperature = self.device.temperature
                 humidity = self.device.humidity
-                print(f"Temperature: {temperature} C | Humidity: {humidity}%")
+                print(f"Temperature: {temperature} C | Humidity: {humidity}")
             except RuntimeError as e:
                 # DHT11 often throws read errors if polled too quickly or on bad reads
                 print(f"DHT11 Error: {e}")
