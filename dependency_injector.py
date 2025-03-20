@@ -37,5 +37,15 @@ class DependencyInjector:
     def start_server(self):
         self.server.run()
 
-    def get_modalities(self):
-        self.mod_stats.fetch_stats()
+    def start_modality_stats(self):
+        """
+        Start fetching sensor stats in the background.
+        """
+        print("Starting modality stats in background...")
+        self.mod_stats.start_fetching()
+
+    def stop_modality_stats(self):
+        """
+        Stop fetching sensor stats.
+        """
+        self.mod_stats.stop_fetching()

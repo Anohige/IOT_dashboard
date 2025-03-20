@@ -17,8 +17,8 @@ def main():
     print("Starting Server...")
     di.start_server()
 
-    print("Getting mods...")
-    di.get_modalities()
+    print("Starting modality stats...")
+    di.start_modality_stats()
 
     # Create or instantiate your RuleAgent.
     # (If the agent depends on incoming MQTT data,
@@ -39,6 +39,8 @@ def main():
                 print("Invalid input. Please try again.")
     except KeyboardInterrupt:
         print("Shutting down...")
+
+        di.stop_modality_stats()
 
         # Stop the MQTT loop gracefully
         di.mqtt_client.client.loop_stop()
