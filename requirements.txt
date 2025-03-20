@@ -2,3 +2,4 @@ paho-mqtt==2.1.0
 PyMySQL==1.1.1
 psutil==5.9.8
 Flask==3.1.0
+flask_cors==5.0.1

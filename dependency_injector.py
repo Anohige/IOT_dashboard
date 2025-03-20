@@ -6,12 +6,16 @@ from connection.mqtt.mqtt_client import MqttClient
 from DAQ. daq import DAQ
 from connection.server.server import Server
 from stats.modality_stats import Modality_stats
+import time
 
 class DependencyInjector:
     """
     This class is responsible for creating and injecting dependencies
     such as MqttClient, FileManager, etc.
     """
+
+    # In dependency_injector.py, modify the constructor
+
     def __init__(self):
         # 2) Instantiate FileManager
         self.file_manager = FileManager()
@@ -20,8 +24,10 @@ class DependencyInjector:
         self.mqtt_client = MqttClient(file_manager=self.file_manager)
         self.daq = DAQ()
         self.server = Server()
-        self.mod_stats = Modality_stats()
 
+        # Initialize modality stats last, after other GPIO-using components
+        time.sleep(0.5)  # Brief pause to let other initializations settle
+        self.mod_stats = Modality_stats()
     def start_mqtt_client(self):
         """
         Start the MQTT loop (blocking)
