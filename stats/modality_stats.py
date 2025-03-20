@@ -28,8 +28,8 @@ class Modality_stats:
         """
         while not self.stop_event.is_set():
             try:
-                temperature = self.device.temperature()
-                humidity = self.device.humidity()
+                temperature = self.device.temperature
+                humidity = self.device.humidity
                 print(f"Temperature: {temperature} C | Humidity: {humidity}%")
             except RuntimeError as e:
                 # DHT11 often throws read errors if polled too quickly or on bad reads
