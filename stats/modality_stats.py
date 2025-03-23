@@ -3,14 +3,14 @@ import RPi.GPIO as GPIO
 
 
 class Sensor:
-    def __init__(self, pin=4):  # Using GPIO 4 (BCM numbering)
+    def __init__(self):  # Using GPIO 4 (BCM numbering)
         """
         Initialize a DHT11 temperature and humidity sensor using RPi.GPIO.
 
         Args:
             pin: The GPIO pin number in BCM mode where the sensor is connected (default: 4)
         """
-        self.pin = pin
+        self.pin = 4
         self.temperature = None
         self.humidity = None
 
