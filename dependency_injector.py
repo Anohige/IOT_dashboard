@@ -5,7 +5,7 @@ from File_manager.file_manager import FileManager
 from connection.mqtt.mqtt_client import MqttClient
 from DAQ. daq import DAQ
 from connection.server.server import Server
-from stats.modality_stats import Modality_stats
+from stats.modality_stats import Sensor
 import time
 
 class DependencyInjector:
@@ -27,7 +27,7 @@ class DependencyInjector:
 
         # Initialize modality stats last, after other GPIO-using components
         time.sleep(0.5)  # Brief pause to let other initializations settle
-        self.mod_stats = Modality_stats()
+        self.mod_stats = Sensor()
     def start_mqtt_client(self):
         """
         Start the MQTT loop (blocking)
@@ -50,8 +50,23 @@ class DependencyInjector:
         print("Starting modality stats in background...")
         self.mod_stats.start_fetching()
 
-    def stop_modality_stats(self):
+    def monitor_continuous(interval=2):
         """
-        Stop fetching sensor stats.
+        Continuously monitor temperature and humidity.
+
+        Args:
+            interval: Time between readings in seconds (default: 2)
         """
-        self.mod_stats.stop_fetching()
+        sensor = Sensor()
+        try:
+            while True:
+                temp, humidity = sensor.read_sensor()
+                if temp is not None and humidity is not None:
+                    print(f"Temp: {temp}°C  Humidity: {humidity}%")
+                else:
+                    print("Sensor reading failed, retrying...")
+                time.sleep(interval)
+        except KeyboardInterrupt:
+            print("\nScript terminated by user.")
+        finally:
+            sensor.cleanup()

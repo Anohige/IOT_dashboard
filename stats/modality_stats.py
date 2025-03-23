@@ -1,88 +1,47 @@
-# stats/modality_stats.py
-
-import RPi.GPIO as GPIO
-import adafruit_dht
-import board
 import time
-import threading
+import board
+import adafruit_dht
 
 
-class Modality_stats:
-    def __init__(self):
-        # Clean up any existing GPIO setups to avoid conflicts
+class Sensor:
+    def __init__(self, pin=board.D4):
+        """
+        Initialize a DHT11 temperature and humidity sensor.
+
+        Args:
+            pin: The GPIO pin where the sensor is connected (default: board.D4)
+        """
+        self.dht_device = adafruit_dht.DHT11(pin)
+        self.temperature = None
+        self.humidity = None
+
+    def read_sensor(self):
+        """
+        Read temperature and humidity from the DHT11 sensor.
+
+        Returns:
+            tuple: (temperature, humidity) or (None, None) if reading fails
+        """
         try:
-            GPIO.cleanup()
-        except:
-            pass
+            self.temperature = self.dht_device.temperature
+            self.humidity = self.dht_device.humidity
+            return self.temperature, self.humidity
+        except RuntimeError as error:
+            print(f"Runtime Error: {error}")
+            return None, None
 
-        GPIO.setwarnings(False)
-        GPIO.setmode(GPIO.BCM)
+    def get_temperature(self):
+        """Get the last read temperature value in Celsius."""
+        return self.temperature
 
-        # Use a slight delay before initializing the DHT device
-        time.sleep(0.5)
+    def get_humidity(self):
+        """Get the last read humidity value in percentage."""
+        return self.humidity
 
-        # Initialize the DHT device
-        self.device = adafruit_dht.DHT11(board.D4)
+    def cleanup(self):
+        """Clean up the sensor resources."""
+        self.dht_device.exit()
+        print("DHT sensor cleanup complete.")
 
-        # This event will let us stop the loop gracefully
-        self.stop_event = threading.Event()
 
-        # Flag to track if we're currently fetching
-        self.is_fetching = False
-
-    def start_fetching(self):
-        """
-        Start the temperature/humidity fetching in a background thread.
-        """
-        if self.is_fetching:
-            print("Already fetching stats!")
-            return
-
-        print("Initializing DHT11 sensor...")
-        self.is_fetching = True
-        self.stop_event.clear()
-        self.thread = threading.Thread(target=self._fetch_loop, daemon=True)
-        self.thread.start()
-
-    def _fetch_loop(self):
-        """
-        Continuously fetch stats until stop_event is set.
-        """
-        # Give the sensor a moment to stabilize
-        time.sleep(1)
-
-        while not self.stop_event.is_set():
-            try:
-                temperature = self.device.temperature
-                humidity = self.device.humidity
-                print(f"Temp: {temperature}C Humidity: {humidity}%")
-            except RuntimeError as error:
-                print(f"DHT11 Error: {error}")
-            except Exception as e:
-                print(f"Unexpected error with DHT11: {e}")
-
-            # Wait between readings
-            time.sleep(2)
-
-    def stop_fetching(self):
-        """
-        Signal the loop to stop, then join the thread.
-        """
-        if not self.is_fetching:
-            print("Not currently fetching stats!")
-            return
-
-        print("Stopping modality stats...")
-        self.stop_event.set()
-
-        if hasattr(self, 'thread'):
-            self.thread.join(timeout=3)  # Wait up to 3 seconds
-
-        # Clean up GPIO
-        try:
-            GPIO.cleanup()
-        except:
-            pass
-
-        self.is_fetching = False
-        print("Modality stats fetching stopped.")
+# Example of using the class in a continuous monitoring loop
