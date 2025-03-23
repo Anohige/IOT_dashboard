@@ -1,101 +1,59 @@
 import time
-import RPi.GPIO as GPIO
+import pigpio
 
 
 class Sensor:
-    def __init__(self):  # Using GPIO 4 (BCM numbering)
+    """
+    A class to read temperature and humidity from DHT11 sensor using pigpio library.
+    This implementation is compatible with most Raspberry Pi models.
+    """
+
+    def __init__(self, gpio=4):
         """
-        Initialize a DHT11 temperature and humidity sensor using RPi.GPIO.
+        Initialize the DHT11 sensor on the specified GPIO pin.
 
         Args:
-            pin: The GPIO pin number in BCM mode where the sensor is connected (default: 4)
+            gpio: GPIO pin number (BCM numbering, default: 4)
         """
-        self.pin = 4
+        self.gpio = gpio
         self.temperature = None
         self.humidity = None
 
-        # Setup GPIO
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(self.pin, GPIO.IN)
+        # Initialize the pigpio connection
+        self.pi = pigpio.pi()
+        if not self.pi.connected:
+            raise RuntimeError("Could not connect to pigpio daemon. Is it running?")
 
-    def read_dht11_dat(self):
+        # Set up data structures for reading DHT11
+        self.data = []
+        self.last_tick = 0
+        self.bits = 0
+        self.high_tick = 0
+        self.either_edge_cb = None
+
+    def _cb(self, gpio, level, tick):
         """
-        Read raw data from DHT11 sensor using RPi.GPIO.
-        This is a more direct implementation that doesn't rely on Adafruit libraries.
+        Callback for GPIO edge changes.
 
-        Returns:
-            tuple: (humidity, temperature) or (None, None) if reading fails
+        Args:
+            gpio: GPIO pin number
+            level: Signal level (0 or 1)
+            tick: Time stamp in microseconds
         """
-        # Initialize variables
-        humidity = 0
-        temperature = 0
-        data = [0] * 40
+        diff = pigpio.tickDiff(self.last_tick, tick)
+        self.last_tick = tick
 
-        # Pull down to start signal
-        GPIO.setup(self.pin, GPIO.OUT)
-        GPIO.output(self.pin, GPIO.LOW)
-        time.sleep(0.018)  # Wait at least 18ms
-
-        # Pull up and wait for sensor response
-        GPIO.output(self.pin, GPIO.HIGH)
-        GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-
-        # Wait for sensor response
-        count = 0
-        while GPIO.input(self.pin) == GPIO.HIGH:
-            count += 1
-            if count > 100:
-                return None, None  # Timeout waiting for response
-
-        # Sensor pulls low for 80μs
-        count = 0
-        while GPIO.input(self.pin) == GPIO.LOW:
-            count += 1
-            if count > 100:
-                return None, None
-
-        # Sensor pulls high for 80μs
-        count = 0
-        while GPIO.input(self.pin) == GPIO.HIGH:
-            count += 1
-            if count > 100:
-                return None, None
-
-        # Read 40 bits of data
-        for i in range(40):
-            # Each bit starts with a 50μs low
-            count = 0
-            while GPIO.input(self.pin) == GPIO.LOW:
-                count += 1
-                if count > 100:
-                    return None, None
-
-            # Length of high signal determines bit value
-            count = 0
-            start = time.time()
-            while GPIO.input(self.pin) == GPIO.HIGH:
-                count += 1
-                if count > 100:
-                    break
-
-            # If high pulse is longer than 30μs, it's a 1
-            if (time.time() - start) > 0.00003:
-                data[i] = 1
-
-        # Convert data to humidity and temperature values
-        humidity_high = sum(data[0:8])
-        humidity_low = sum(data[i] * 2 ** (7 - i) for i in range(8, 16))
-        temperature_high = sum(data[i] * 2 ** (7 - i) for i in range(16, 24))
-        temperature_low = sum(data[i] * 2 ** (7 - i) for i in range(24, 32))
-        checksum = sum(data[i] * 2 ** (7 - i) for i in range(32, 40))
-
-        # Verify checksum
-        if checksum == ((humidity_high + humidity_low + temperature_high + temperature_low) & 0xFF):
-            humidity = humidity_high + humidity_low / 10.0
-            temperature = temperature_high + temperature_low / 10.0
-            return humidity, temperature
-        else:
-            return None, None
+        if level == 0:  # Falling edge
+            if diff > 50:  # Noise filter
+                self.high_tick = diff
+        else:  # Rising edge
+            if diff > 50:  # Noise filter
+                if self.bits < 40:
+                    self.bits += 1
+                    if self.high_tick > 100:  # Long pulse = 1, short pulse = 0
+                        self.data.append(1)
+                    else:
+                        self.data.append(0)
 
     def read_sensor(self):
         """
@@ -105,14 +63,45 @@ class Sensor:
             tuple: (temperature, humidity) or (None, None) if reading fails
         """
         try:
-            humidity, temperature = self.read_dht11_dat()
-            if humidity is not None and temperature is not None:
-                self.humidity = humidity
-                self.temperature = temperature
-                return temperature, humidity
+            self.data = []
+            self.bits = 0
+
+            # Set the GPIO pin as output and drive it low for at least 18ms
+            self.pi.set_mode(self.gpio, pigpio.OUTPUT)
+            self.pi.write(self.gpio, 0)
+            time.sleep(0.018)
+
+            # Set callback to record rise and fall times
+            self.pi.set_mode(self.gpio, pigpio.INPUT)
+            self.pi.set_pull_up_down(self.gpio, pigpio.PUD_UP)
+            self.last_tick = self.pi.get_current_tick()
+            self.either_edge_cb = self.pi.callback(self.gpio, pigpio.EITHER_EDGE, self._cb)
+
+            # Wait for data collection
+            time.sleep(0.2)
+            self.either_edge_cb.cancel()
+
+            # Process data if enough bits received
+            if len(self.data) >= 40:
+                # Convert data to bytes
+                byte_data = []
+                for i in range(0, 40, 8):
+                    byte = 0
+                    for bit in range(8):
+                        byte = (byte << 1) | self.data[i + bit]
+                    byte_data.append(byte)
+
+                # Verify checksum
+                if byte_data[4] == ((byte_data[0] + byte_data[1] + byte_data[2] + byte_data[3]) & 0xFF):
+                    self.humidity = byte_data[0]
+                    self.temperature = byte_data[2]
+                    return self.temperature, self.humidity
+
+            # Return None values if reading failed
             return None, None
+
         except Exception as e:
-            print(f"Error reading sensor: {e}")
+            print(f"Error reading DHT11: {e}")
             return None, None
 
     def get_temperature(self):
@@ -124,6 +113,10 @@ class Sensor:
         return self.humidity
 
     def cleanup(self):
-        """Clean up the GPIO resources."""
-        GPIO.cleanup(self.pin)
+        """Clean up resources used by the sensor."""
+        if self.either_edge_cb:
+            self.either_edge_cb.cancel()
+        self.pi.stop()
         print("DHT sensor cleanup complete.")
+
+

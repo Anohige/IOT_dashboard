@@ -57,8 +57,8 @@ class DependencyInjector:
         Args:
             interval: Time between readings in seconds (default: 2)
         """
-        sensor = Sensor()
         try:
+            sensor = Sensor()
             while True:
                 temp, humidity = sensor.read_sensor()
                 if temp is not None and humidity is not None:
@@ -69,4 +69,6 @@ class DependencyInjector:
         except KeyboardInterrupt:
             print("\nScript terminated by user.")
         finally:
-            sensor.cleanup()
+            if 'sensor' in locals():
+                sensor.cleanup()
+
