@@ -2,7 +2,7 @@ import time
 import RPi.GPIO as GPIO
 
 
-class Sensor:
+class DHT11Result:
     """
     DHT11 sensor result returned by DHT11.read() method
     """
@@ -23,7 +23,7 @@ class Sensor:
         return self.error_code == DHT11Result.ERR_NO_ERROR
 
 
-class DHT11Sensor:
+class Sensor:
     """
     DHT11 sensor interface using RPi.GPIO directly
     """
