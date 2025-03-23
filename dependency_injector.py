@@ -7,6 +7,9 @@ from DAQ. daq import DAQ
 from connection.server.server import Server
 from stats.modality_stats import Sensor
 import time
+import board
+import adafruit_dht
+
 
 class DependencyInjector:
     """
@@ -52,23 +55,28 @@ class DependencyInjector:
 
     def monitor_continuous(interval=2):
         """
-        Continuously monitor temperature and humidity.
+        Continuously monitor temperature and humidity (same as original test code).
 
         Args:
             interval: Time between readings in seconds (default: 2)
         """
+        dht_device = adafruit_dht.DHT11(board.D4)
         try:
-            sensor = Sensor()
             while True:
-                temp, humidity = sensor.read_sensor()
-                if temp is not None and humidity is not None:
-                    print(f"Temp: {temp}°C  Humidity: {humidity}%")
-                else:
-                    print("Sensor reading failed, retrying...")
+                try:
+                    # Read temperature and humidity
+                    temperature = dht_device.temperature
+                    humidity = dht_device.humidity
+                    if temperature is not None and humidity is not None:
+                        print(f"Temp: {temperature}°C  Humidity: {humidity}%")
+                    else:
+                        print("Sensor reading failed, retrying...")
+                except RuntimeError as error:
+                    print(f"Runtime Error: {error}. Retrying in 2 seconds...")
                 time.sleep(interval)
         except KeyboardInterrupt:
             print("\nScript terminated by user.")
         finally:
-            if 'sensor' in locals():
-                sensor.cleanup()
+            dht_device.exit()
+            print("DHT sensor cleanup complete.")
 
