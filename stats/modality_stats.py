@@ -2,7 +2,7 @@ import time
 import RPi.GPIO as GPIO
 
 
-class DHT11Sensor:
+class Sensor:
     def __init__(self, pin=4):  # Using GPIO 4 (BCM numbering)
         """
         Initialize a DHT11 temperature and humidity sensor using RPi.GPIO.
