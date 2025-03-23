@@ -18,7 +18,7 @@ def main():
     di.start_server()
 
     print("Starting modality stats...")
-    di.start_modality_stats()
+    di.monitor_continuous()
 
     # Create or instantiate your RuleAgent.
     # (If the agent depends on incoming MQTT data,
