@@ -10,7 +10,7 @@ class DHT11Sensor:
     Requires the Adafruit_CircuitPython_DHT library.
     """
 
-    def __init__(self, pin=board.D4, pin_number=None):
+    def __init__(self, pin=board.D17, pin_number=None):
         """
         Initialize the DHT11 sensor.
 
