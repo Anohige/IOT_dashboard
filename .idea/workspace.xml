@@ -4,10 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e71a34ca-43b5-484d-976b-df1fe0f1576e" name="Changes" comment="modified a lot">
+    <list default="true" id="e71a34ca-43b5-484d-976b-df1fe0f1576e" name="Changes" comment="backtracked">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/dependency_injector.py" beforeDir="false" afterPath="$PROJECT_DIR$/dependency_injector.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/stats/modality_stats.py" beforeDir="false" afterPath="$PROJECT_DIR$/stats/modality_stats.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -149,7 +148,7 @@
       <workItem from="1742402456037" duration="4441000" />
       <workItem from="1742472072247" duration="233000" />
       <workItem from="1742494008671" duration="3280000" />
-      <workItem from="1742755996079" duration="6453000" />
+      <workItem from="1742755996079" duration="7875000" />
     </task>
     <task id="LOCAL-00001" summary="first commit">
       <option name="closed" value="true" />
@@ -479,7 +478,31 @@
       <option name="project" value="LOCAL" />
       <updated>1742837153922</updated>
     </task>
-    <option name="localTasksCounter" value="42" />
+    <task id="LOCAL-00042" summary="backtracked">
+      <option name="closed" value="true" />
+      <created>1742837736138</created>
+      <option name="number" value="00042" />
+      <option name="presentableId" value="LOCAL-00042" />
+      <option name="project" value="LOCAL" />
+      <updated>1742837736138</updated>
+    </task>
+    <task id="LOCAL-00043" summary="backtracked">
+      <option name="closed" value="true" />
+      <created>1742837802332</created>
+      <option name="number" value="00043" />
+      <option name="presentableId" value="LOCAL-00043" />
+      <option name="project" value="LOCAL" />
+      <updated>1742837802332</updated>
+    </task>
+    <task id="LOCAL-00044" summary="backtracked">
+      <option name="closed" value="true" />
+      <created>1742837813043</created>
+      <option name="number" value="00044" />
+      <option name="presentableId" value="LOCAL-00044" />
+      <option name="project" value="LOCAL" />
+      <updated>1742837813043</updated>
+    </task>
+    <option name="localTasksCounter" value="45" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -512,7 +535,8 @@
     <MESSAGE value="added modality_stats.py" />
     <MESSAGE value="modified modality_stats.py" />
     <MESSAGE value="modified a lot" />
-    <option name="LAST_COMMIT_MESSAGE" value="modified a lot" />
+    <MESSAGE value="backtracked" />
+    <option name="LAST_COMMIT_MESSAGE" value="backtracked" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -527,6 +551,6 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/python$app.coverage" NAME="app Coverage Results" MODIFIED="1734709217106" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/python$main.coverage" NAME="main Coverage Results" MODIFIED="1742406413410" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/python$main.coverage" NAME="main Coverage Results" MODIFIED="1742838688023" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

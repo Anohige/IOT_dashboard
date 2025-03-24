@@ -44,5 +44,5 @@ class Server:
             results = self.db_manager.execute_query(query, fetch=True)
             return jsonify(results if results else []), 200
 
-    def run(self, host='0.0.0.0', port=5001):
+    def run(self, host='0.0.0.0', port=5000):
         self.app.run(host=host, port=port, debug=True)
