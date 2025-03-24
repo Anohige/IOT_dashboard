@@ -5,10 +5,8 @@ from File_manager.file_manager import FileManager
 from connection.mqtt.mqtt_client import MqttClient
 from DAQ. daq import DAQ
 from connection.server.server import Server
-from stats.modality_stats import Sensor
+from stats.modality_stats import DHT11Sensor
 import time
-import board
-import adafruit_dht
 
 
 class DependencyInjector:
@@ -30,7 +28,7 @@ class DependencyInjector:
 
         # Initialize modality stats last, after other GPIO-using components
         time.sleep(0.5)  # Brief pause to let other initializations settle
-        self.mod_stats = Sensor()
+
     def start_mqtt_client(self):
         """
         Start the MQTT loop (blocking)
@@ -50,33 +48,24 @@ class DependencyInjector:
         """
         Start fetching sensor stats in the background.
         """
-        print("Starting modality stats in background...")
-        self.mod_stats.start_fetching()
-
-    def monitor_continuous(interval=2):
-        """
-        Continuously monitor temperature and humidity (same as original test code).
-
-        Args:
-            interval: Time between readings in seconds (default: 2)
-        """
-        dht_device = adafruit_dht.DHT11(board.D4)
+        sensor = DHT11Sensor()  # Default pin is D4
         try:
             while True:
-                try:
-                    # Read temperature and humidity
-                    temperature = dht_device.temperature
-                    humidity = dht_device.humidity
-                    if temperature is not None and humidity is not None:
-                        print(f"Temp: {temperature}°C  Humidity: {humidity}%")
-                    else:
-                        print("Sensor reading failed, retrying...")
-                except RuntimeError as error:
-                    print(f"Runtime Error: {error}. Retrying in 2 seconds...")
-                time.sleep(interval)
-        except KeyboardInterrupt:
-            print("\nScript terminated by user.")
-        finally:
-            dht_device.exit()
-            print("DHT sensor cleanup complete.")
+                # Read temperature and humidity
+                temperature, humidity = sensor.read_sensor()
 
+                if temperature is not None and humidity is not None:
+                    print(f"Temperature: {temperature}°C")
+                    print(f"Humidity: {humidity}%")
+                else:
+                    print("Failed to read from DHT11 sensor!")
+
+                # Wait before next reading
+                time.sleep(5)
+
+        except KeyboardInterrupt:
+            # Clean up when user terminates program
+            pass
+        finally:
+            sensor.close()
+            print("Sensor closed")
