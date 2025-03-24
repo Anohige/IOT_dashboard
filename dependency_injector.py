@@ -49,6 +49,7 @@ class DependencyInjector:
         Start fetching sensor stats in the background.
         """
         sensor = DHT11Sensor()  # Default pin is D4
+
         try:
             while True:
                 # Read temperature and humidity

@@ -1,6 +1,7 @@
 import time
 import board
 import adafruit_dht
+import os
 
 
 class DHT11Sensor:
@@ -9,14 +10,37 @@ class DHT11Sensor:
     Requires the Adafruit_CircuitPython_DHT library.
     """
 
-    def __init__(self, pin=board.D4):
+    def __init__(self, pin=board.D4, pin_number=None):
         """
         Initialize the DHT11 sensor.
 
         Args:
             pin: The GPIO pin the sensor is connected to. Default is D4.
+            pin_number: Alternative way to specify pin by number (e.g., 4 for D4)
         """
-        self.dht_device = adafruit_dht.DHT11(pin, use_pulseio=False)
+        # Use pin_number if provided, otherwise use the board pin
+        if pin_number is not None:
+            if hasattr(board, f"D{pin_number}"):
+                pin = getattr(board, f"D{pin_number}")
+            else:
+                # Some platforms might need a different approach
+                pin = pin_number
+
+        try:
+            # Try creating the device with use_pulseio=False
+            self.dht_device = adafruit_dht.DHT11(pin, use_pulseio=False)
+        except Exception as e:
+            print(f"Error initializing DHT11: {e}")
+            print("Attempting cleanup and retry...")
+            # Try to release the GPIO before retrying
+            try:
+                # Force release GPIO if possible
+                os.system(f"gpio unexport {pin_number if pin_number is not None else 4}")
+                time.sleep(1)
+                self.dht_device = adafruit_dht.DHT11(pin, use_pulseio=False)
+            except Exception as e2:
+                raise RuntimeError(f"Failed to initialize DHT11 after cleanup: {e2}")
+
         self.temperature = None
         self.humidity = None
         self.last_read_time = 0
@@ -50,7 +74,11 @@ class DHT11Sensor:
                 continue
             except Exception as e:
                 # Non-reading errors should be raised
-                self.dht_device.exit()
+                print(f"Critical error reading sensor: {e}")
+                try:
+                    self.dht_device.exit()
+                except:
+                    pass
                 raise e
 
         # If we get here, all retries failed
@@ -66,4 +94,7 @@ class DHT11Sensor:
 
     def close(self):
         """Clean up the DHT device."""
-        self.dht_device.exit()
+        try:
+            self.dht_device.exit()
+        except:
+            pass  # Ignore errors on cleanup
