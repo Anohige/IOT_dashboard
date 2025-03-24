@@ -40,8 +40,6 @@ def main():
     except KeyboardInterrupt:
         print("Shutting down...")
 
-        di.stop_modality_stats()
-
         # Stop the MQTT loop gracefully
         di.mqtt_client.client.loop_stop()
         di.mqtt_client.client.disconnect()
