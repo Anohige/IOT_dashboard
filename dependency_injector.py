@@ -1,4 +1,5 @@
 # dependency_injector.py
+import sys
 
 # 1) Import your classes
 from File_manager.file_manager import FileManager
@@ -48,7 +49,22 @@ class DependencyInjector:
         """
         Start fetching sensor stats in the background.
         """
-        sensor = DHT11Sensor()  # Default pin is D4
+        try:
+            # Try different pin specifications if your default isn't working
+            # Option 1: Use default
+            sensor = DHT11Sensor()
+
+            # If that fails, you might need to specify the pin number explicitly
+            # Uncomment one of these alternatives:
+            # sensor = DHT11Sensor(pin_number=4)  # For GPIO4
+            # sensor = DHT11Sensor(pin_number=17)  # Common alternative pin
+
+            print("DHT11 sensor initialized successfully")
+        except Exception as e:
+            print(f"Failed to initialize sensor: {e}")
+            print("Try running with sudo if this is a permission issue")
+            print("Or ensure no other process is using the GPIO pin")
+            sys.exit(1)
 
         try:
             while True:
@@ -66,7 +82,9 @@ class DependencyInjector:
 
         except KeyboardInterrupt:
             # Clean up when user terminates program
-            pass
+            print("Program terminated by user")
+        except Exception as e:
+            print(f"Unexpected error: {e}")
         finally:
             sensor.close()
             print("Sensor closed")
