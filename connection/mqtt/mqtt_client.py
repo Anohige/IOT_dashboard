@@ -96,5 +96,5 @@ class MqttClient:
                 stats["device_serial"] = "58969696969"
                 payload = json.dumps(stats)
                 self.client.publish(self.stats_topic, payload)
-                #print(f"[MQTT] Published System Stats: {payload}")
+                print(f"[MQTT] Published System Stats: {payload}")
             time.sleep(5)

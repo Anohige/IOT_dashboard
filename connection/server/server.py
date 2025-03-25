@@ -11,6 +11,7 @@ class Server:
         # GET endpoint for devices
         @self.app.route('/devices', methods=['GET'])
         def get_devices():
+            print("DEBUG: GET /devices endpoint was called")
             query = "SELECT * FROM devices"
             results = self.db_manager.execute_query(query, fetch=True)
             return jsonify(results if results else []), 200
@@ -44,5 +45,5 @@ class Server:
             results = self.db_manager.execute_query(query, fetch=True)
             return jsonify(results if results else []), 200
 
-    def run(self, host='0.0.0.0', port=5000):
+    def run(self, host='0.0.0.0', port=5001):
         self.app.run(host=host, port=port, debug=True)
