@@ -63,6 +63,7 @@ class DependencyInjector:
                     break
                 else:
                     print(f"Failed to read from DHT11 on GPIO pin {pin}")
+                    sensor.close()
                     sensor = None
             except Exception as e:
                 print(f"Error with GPIO pin {pin}: {e}")
@@ -91,3 +92,6 @@ class DependencyInjector:
             print("\nProgram terminated by user")
         except Exception as e:
             print(f"Unexpected error: {str(e)}")
+        finally:
+            if sensor:
+                sensor.close()
