@@ -46,45 +46,48 @@ class DependencyInjector:
         self.server.run()
 
     def start_modality_stats(self):
-        """
-        Start fetching sensor stats in the background.
-        """
-        try:
-            # Try different pin specifications if your default isn't working
-            # Option 1: Use default
-            sensor = DHT11Sensor()
+        # Try different GPIO pins if one doesn't work
+        pins_to_try = [4, 17, 22, 23]
+        sensor = None
 
-            # If that fails, you might need to specify the pin number explicitly
-            # Uncomment one of these alternatives:
-            # sensor = DHT11Sensor(pin_number=4)  # For GPIO4
-            # sensor = DHT11Sensor(pin_number=17)  # Common alternative pin
+        # Try each pin until one works
+        for pin in pins_to_try:
+            try:
+                print(f"Trying DHT11 on GPIO pin {pin}...")
+                sensor = DHT11Sensor(pin=pin)
 
-            print("DHT11 sensor initialized successfully")
-        except Exception as e:
-            print(f"Failed to initialize sensor: {e}")
-            print("Try running with sudo if this is a permission issue")
-            print("Or ensure no other process is using the GPIO pin")
+                # Test if sensor works
+                temperature, humidity = sensor.read_sensor()
+                if temperature is not None and humidity is not None:
+                    print(f"Success! DHT11 found on GPIO pin {pin}")
+                    break
+                else:
+                    print(f"Failed to read from DHT11 on GPIO pin {pin}")
+                    sensor = None
+            except Exception as e:
+                print(f"Error with GPIO pin {pin}: {e}")
+
+        if sensor is None:
+            print("Could not initialize DHT11 sensor on any pin. Check connections and try again.")
             sys.exit(1)
+
+        print(f"DHT11 sensor initialized successfully on GPIO pin {sensor.pin}")
+        print("Starting sensor readings...")
 
         try:
             while True:
-                # Read temperature and humidity
                 temperature, humidity = sensor.read_sensor()
 
                 if temperature is not None and humidity is not None:
                     print(f"Temperature: {temperature}°C")
                     print(f"Humidity: {humidity}%")
                 else:
-                    print("Failed to read from DHT11 sensor!")
+                    print("Failed to read sensor data")
 
                 # Wait before next reading
                 time.sleep(5)
 
         except KeyboardInterrupt:
-            # Clean up when user terminates program
-            print("Program terminated by user")
+            print("\nProgram terminated by user")
         except Exception as e:
-            print(f"Unexpected error: {e}")
-        finally:
-            sensor.close()
-            print("Sensor closed")
+            print(f"Unexpected error: {str(e)}")
