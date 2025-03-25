@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e71a34ca-43b5-484d-976b-df1fe0f1576e" name="Changes" comment="backtracked">
+    <list default="true" id="e71a34ca-43b5-484d-976b-df1fe0f1576e" name="Changes" comment="some new chages to mod">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/stats/modality_stats.py" beforeDir="false" afterPath="$PROJECT_DIR$/stats/modality_stats.py" afterDir="false" />
     </list>
@@ -148,7 +148,7 @@
       <workItem from="1742472072247" duration="233000" />
       <workItem from="1742494008671" duration="3280000" />
       <workItem from="1742755996079" duration="9992000" />
-      <workItem from="1742928485772" duration="2267000" />
+      <workItem from="1742928485772" duration="3112000" />
     </task>
     <task id="LOCAL-00001" summary="first commit">
       <option name="closed" value="true" />
@@ -518,7 +518,23 @@
       <option name="project" value="LOCAL" />
       <updated>1742930567608</updated>
     </task>
-    <option name="localTasksCounter" value="47" />
+    <task id="LOCAL-00047" summary="some new chages to mod">
+      <option name="closed" value="true" />
+      <created>1742931006744</created>
+      <option name="number" value="00047" />
+      <option name="presentableId" value="LOCAL-00047" />
+      <option name="project" value="LOCAL" />
+      <updated>1742931006744</updated>
+    </task>
+    <task id="LOCAL-00048" summary="some new chages to mod">
+      <option name="closed" value="true" />
+      <created>1742931161054</created>
+      <option name="number" value="00048" />
+      <option name="presentableId" value="LOCAL-00048" />
+      <option name="project" value="LOCAL" />
+      <updated>1742931161054</updated>
+    </task>
+    <option name="localTasksCounter" value="49" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -552,7 +568,8 @@
     <MESSAGE value="modified modality_stats.py" />
     <MESSAGE value="modified a lot" />
     <MESSAGE value="backtracked" />
-    <option name="LAST_COMMIT_MESSAGE" value="backtracked" />
+    <MESSAGE value="some new chages to mod" />
+    <option name="LAST_COMMIT_MESSAGE" value="some new chages to mod" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

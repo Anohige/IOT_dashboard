@@ -1,103 +1,84 @@
-import pigpio
 import time
-import math
-
+import board
+import adafruit_dht
+import os
+import atexit
 
 class DHT11Sensor:
     """
-    DHT11 sensor implementation using pigpio library.
+    A class to interface with the DHT11 temperature and humidity sensor.
+    Requires the Adafruit_CircuitPython_DHT library.
     """
 
-    def __init__(self, pin=4):
+    def __init__(self, pin=board.D17, pin_number=None):
         """
-        Initialize the DHT11 sensor.
+        Initialize the DHT11 sensor interface.
 
         Args:
-            pin: The GPIO pin number the sensor is connected to.
+            pin: The GPIO pin the sensor is connected to. Default is board.D17.
+            pin_number: Alternative way to specify pin by number (e.g., 17 for GPIO17)
         """
         self.pin = pin
-        self.pi = pigpio.pi()
+        self.pin_number = pin_number if pin_number is not None else 17
+        self.last_read_time = 0
         self.temperature = None
         self.humidity = None
+        self._initialize_sensor()
+        # Register the cleanup to run when the program exits
+        atexit.register(self.close)
 
-        # Verify pigpio connection
-        if not self.pi.connected:
-            raise RuntimeError("Failed to connect to pigpio. Is the pigpio daemon running?")
+    def _initialize_sensor(self):
+        """Initialize the DHT11 sensor."""
+        try:
+            self.dht_device = adafruit_dht.DHT11(self.pin, use_pulseio=False)
+        except Exception as e:
+            print(f"Error initializing DHT11: {e}")
+            print("Attempting cleanup and retry...")
+            try:
+                os.system(f"gpio unexport {self.pin_number}")
+                time.sleep(1)
+                self.dht_device = adafruit_dht.DHT11(self.pin, use_pulseio=False)
+            except Exception as e2:
+                raise RuntimeError(f"Failed to initialize DHT11 after cleanup: {e2}")
 
-    def read_sensor(self, max_attempts=5):
+    def read_sensor(self, max_retries=5):
         """
         Read temperature and humidity data from the sensor.
+
+        Args:
+            max_retries: Maximum number of retries if reading fails
 
         Returns:
             tuple: (temperature, humidity) or (None, None) if reading fails
         """
-        for attempt in range(max_attempts):
+        current_time = time.time()
+        # Ensure at least 2 seconds between sensor reads
+        if current_time - self.last_read_time < 2.0:
+            time.sleep(2.0 - (current_time - self.last_read_time))
+
+        retries = 0
+        while retries < max_retries:
             try:
-                # Prepare for reading
-                self.pi.set_mode(self.pin, pigpio.OUTPUT)
-                self.pi.write(self.pin, 1)
-                time.sleep(0.05)
-                self.pi.write(self.pin, 0)
-                time.sleep(0.02)
-                self.pi.write(self.pin, 1)
-                self.pi.set_mode(self.pin, pigpio.INPUT)
-
-                # Wait for response
-                start_time = time.time()
-                while self.pi.read(self.pin) == 1:
-                    if time.time() - start_time > 0.1:
-                        break
-
-                # Collect data pulses
-                data = []
-                for _ in range(40):
-                    # Wait for low pulse
-                    while self.pi.read(self.pin) == 0:
-                        pass
-
-                    # Measure high pulse duration
-                    start = time.time()
-                    while self.pi.read(self.pin) == 1:
-                        pass
-                    duration = time.time() - start
-
-                    # Determine bit value based on pulse duration
-                    data.append(1 if duration > 0.0001 else 0)
-
-                # Convert bit stream to bytes
-                humidity_high = int(''.join(map(str, data[0:8])), 2)
-                humidity_low = int(''.join(map(str, data[8:16])), 2)
-                temperature_high = int(''.join(map(str, data[16:24])), 2)
-                temperature_low = int(''.join(map(str, data[24:32])), 2)
-                checksum = int(''.join(map(str, data[32:40])), 2)
-
-                # Verify checksum
-                calculated_sum = (humidity_high + humidity_low +
-                                  temperature_high + temperature_low) & 0xFF
-
-                if calculated_sum == checksum:
-                    # Handle temperature sign (for DHT11 this is usually positive)
-                    temperature = temperature_high
-
-                    self.temperature = temperature
-                    self.humidity = humidity_high
-
-                    return self.temperature, self.humidity
-
+                self.temperature = self.dht_device.temperature
+                self.humidity = self.dht_device.humidity
+                self.last_read_time = time.time()
+                return self.temperature, self.humidity
+            except RuntimeError as e:
+                print(f"RuntimeError: {e}. Retrying...")
+                retries += 1
+                time.sleep(0.5)
             except Exception as e:
-                print(f"Attempt {attempt + 1} failed: {e}")
-                time.sleep(1)
-
+                print(f"Critical error reading sensor: {e}")
+                # Reinitialize sensor on critical errors
+                self._initialize_sensor()
+                retries += 1
+                time.sleep(0.5)
         return None, None
 
-    def get_temperature(self):
-        """Get the last read temperature value in Celsius."""
-        return self.temperature
-
-    def get_humidity(self):
-        """Get the last read humidity value in percentage."""
-        return self.humidity
-
     def close(self):
-        """Close the pigpio connection."""
-        self.pi.stop()
+        """Clean up the DHT device."""
+        try:
+            self.dht_device.exit()
+            print("DHT11 sensor cleanup successful.")
+        except Exception as e:
+            print(f"Error during sensor cleanup: {e}")

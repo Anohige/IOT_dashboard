@@ -45,53 +45,16 @@ class DependencyInjector:
     def start_server(self):
         self.server.run()
 
+
     def start_modality_stats(self):
-        # Try different GPIO pins if one doesn't work
-        pins_to_try = [4, 17, 22, 23]
-        sensor = None
-
-        # Try each pin until one works
-        for pin in pins_to_try:
-            try:
-                print(f"Trying DHT11 on GPIO pin {pin}...")
-                sensor = DHT11Sensor(pin=pin)
-
-                # Test if sensor works
-                temperature, humidity = sensor.read_sensor()
-                if temperature is not None and humidity is not None:
-                    print(f"Success! DHT11 found on GPIO pin {pin}")
-                    break
-                else:
-                    print(f"Failed to read from DHT11 on GPIO pin {pin}")
-                    sensor.close()
-                    sensor = None
-            except Exception as e:
-                print(f"Error with GPIO pin {pin}: {e}")
-
-        if sensor is None:
-            print("Could not initialize DHT11 sensor on any pin. Check connections and try again.")
-            sys.exit(1)
-
-        print(f"DHT11 sensor initialized successfully on GPIO pin {sensor.pin}")
-        print("Starting sensor readings...")
-
+        sensor = DHT11Sensor()
         try:
             while True:
-                temperature, humidity = sensor.read_sensor()
-
-                if temperature is not None and humidity is not None:
-                    print(f"Temperature: {temperature}°C")
-                    print(f"Humidity: {humidity}%")
+                temp, hum = sensor.read_sensor()
+                if temp is not None and hum is not None:
+                    print(f"Temperature: {temp}°C, Humidity: {hum}%")
                 else:
-                    print("Failed to read sensor data")
-
-                # Wait before next reading
-                time.sleep(5)
-
+                    print("Failed to read from sensor.")
+                time.sleep(2)  # Ensure well-spaced periodic reads
         except KeyboardInterrupt:
-            print("\nProgram terminated by user")
-        except Exception as e:
-            print(f"Unexpected error: {str(e)}")
-        finally:
-            if sensor:
-                sensor.close()
+            print("Exiting program.")
