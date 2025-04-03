@@ -93,7 +93,7 @@ class MqttClient:
             if stats:
                 # Include device_serial in the payload.
                 # For testing, we set it to a fixed value.
-                stats["device_serial"] = "58969696969"
+                stats["device_serial"] = self.daq.get_rpi_serial()
                 payload = json.dumps(stats)
                 self.client.publish(self.stats_topic, payload)
                 print(f"[MQTT] Published System Stats: {payload}")
