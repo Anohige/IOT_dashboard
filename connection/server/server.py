@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from DB_Manager.db_manager import DBManager
 
+
 class Server:
     def __init__(self):
         self.app = Flask(__name__)
@@ -37,6 +38,23 @@ class Server:
             )
             self.db_manager.execute_query(query, values=values, fetch=False)
             return jsonify({"message": "Device created successfully"}), 201
+
+        # DELETE endpoint to remove a device from the "devices" table
+        @self.app.route('/devices/<device_serial>', methods=['DELETE'])
+        def delete_device(device_serial):
+            print(f"DEBUG: DELETE /devices/{device_serial} endpoint was called")
+            if not device_serial:
+                return jsonify({"error": "No device serial provided"}), 400
+
+            query = "DELETE FROM devices WHERE device_serial = %s"
+            values = (device_serial,)
+
+            try:
+                self.db_manager.execute_query(query, values=values, fetch=False)
+                return jsonify({"message": f"Device {device_serial} deleted successfully"}), 200
+            except Exception as e:
+                print(f"Error deleting device: {e}")
+                return jsonify({"error": f"Failed to delete device: {str(e)}"}), 500
 
         # Endpoint to fetch available device serials from the "iot_devices" table
         @self.app.route('/iot_devices', methods=['GET'])

@@ -6,7 +6,7 @@ from File_manager.file_manager import FileManager
 from connection.mqtt.mqtt_client import MqttClient
 from DAQ. daq import DAQ
 from connection.server.server import Server
-from stats.modality_stats import DHT11Sensor
+#from stats.modality_stats import DHT11Sensor
 import time
 
 
@@ -46,15 +46,15 @@ class DependencyInjector:
         self.server.run()
 
 
-    def start_modality_stats(self):
-        sensor = DHT11Sensor()
-        try:
-            while True:
-                temp, hum = sensor.read_sensor()
-                if temp is not None and hum is not None:
-                    print(f"Temperature: {temp}°C, Humidity: {hum}%")
-                else:
-                    print("Failed to read from sensor.")
-                time.sleep(2)  # Ensure well-spaced periodic reads
-        except KeyboardInterrupt:
-            print("Exiting program.")
+    # def start_modality_stats(self):
+    #     sensor = DHT11Sensor()
+    #     try:
+    #         while True:
+    #             temp, hum = sensor.read_sensor()
+    #             if temp is not None and hum is not None:
+    #                 print(f"Temperature: {temp}°C, Humidity: {hum}%")
+    #             else:
+    #                 print("Failed to read from sensor.")
+    #             time.sleep(2)  # Ensure well-spaced periodic reads
+    #     except KeyboardInterrupt:
+    #         print("Exiting program.")

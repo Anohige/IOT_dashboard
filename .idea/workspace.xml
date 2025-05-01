@@ -7,9 +7,11 @@
     <list default="true" id="e71a34ca-43b5-484d-976b-df1fe0f1576e" name="Changes" comment="some new chages to mod">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/connection/mqtt/mqtt_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/connection/mqtt/mqtt_client.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/connection/server/server.py" beforeDir="false" afterPath="$PROJECT_DIR$/connection/server/server.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/dependency_injector.py" beforeDir="false" afterPath="$PROJECT_DIR$/dependency_injector.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/stats/modality_stats.py" beforeDir="false" afterPath="$PROJECT_DIR$/stats/modality_stats.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/stats/system_stats.py" beforeDir="false" afterPath="$PROJECT_DIR$/stats/system_stats.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -72,6 +74,9 @@
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
+  <component name="PyFindUsagesOptions">
+    <option name="isSearchForTextOccurrences" value="true" />
+  </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/connection" />
@@ -154,23 +159,9 @@
       <workItem from="1742928485772" duration="4638000" />
       <workItem from="1743522910619" duration="1447000" />
       <workItem from="1743619217582" duration="462000" />
-      <workItem from="1743690964282" duration="1626000" />
-    </task>
-    <task id="LOCAL-00001" summary="first commit">
-      <option name="closed" value="true" />
-      <created>1736878527347</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1736878527347</updated>
-    </task>
-    <task id="LOCAL-00002" summary="Second commit">
-      <option name="closed" value="true" />
-      <created>1738252638368</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
-      <option name="project" value="LOCAL" />
-      <updated>1738252638368</updated>
+      <workItem from="1743690964282" duration="1971000" />
+      <workItem from="1745593208414" duration="6595000" />
+      <workItem from="1745864102947" duration="12979000" />
     </task>
     <task id="LOCAL-00003" summary="Adding daq">
       <option name="closed" value="true" />
@@ -548,7 +539,23 @@
       <option name="project" value="LOCAL" />
       <updated>1742932901448</updated>
     </task>
-    <option name="localTasksCounter" value="50" />
+    <task id="LOCAL-00050" summary="some new chages to mod">
+      <option name="closed" value="true" />
+      <created>1743692616297</created>
+      <option name="number" value="00050" />
+      <option name="presentableId" value="LOCAL-00050" />
+      <option name="project" value="LOCAL" />
+      <updated>1743692616297</updated>
+    </task>
+    <task id="LOCAL-00051" summary="some new chages to mod">
+      <option name="closed" value="true" />
+      <created>1743692622083</created>
+      <option name="number" value="00051" />
+      <option name="presentableId" value="LOCAL-00051" />
+      <option name="project" value="LOCAL" />
+      <updated>1743692622083</updated>
+    </task>
+    <option name="localTasksCounter" value="52" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -598,6 +605,6 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/python$app.coverage" NAME="app Coverage Results" MODIFIED="1734709217106" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/python$main.coverage" NAME="main Coverage Results" MODIFIED="1743691844553" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/python$main.coverage" NAME="main Coverage Results" MODIFIED="1746103951326" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
