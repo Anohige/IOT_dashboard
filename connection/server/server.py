@@ -13,8 +13,19 @@ class Server:
         @self.app.route('/devices', methods=['GET'])
         def get_devices():
             print("DEBUG: GET /devices endpoint was called")
-            query = "SELECT * FROM devices"
-            results = self.db_manager.execute_query(query, fetch=True)
+
+            # Check if there's a device_serial query parameter
+            device_serial = request.args.get('device_serial')
+
+            if device_serial:
+                # Get specific device
+                query = "SELECT * FROM devices WHERE device_serial = %s"
+                results = self.db_manager.execute_query(query, values=(device_serial,), fetch=True)
+            else:
+                # Get all devices
+                query = "SELECT * FROM devices"
+                results = self.db_manager.execute_query(query, fetch=True)
+
             return jsonify(results if results else []), 200
 
         # POST endpoint to create a new device in the "devices" table
@@ -38,6 +49,36 @@ class Server:
             )
             self.db_manager.execute_query(query, values=values, fetch=False)
             return jsonify({"message": "Device created successfully"}), 201
+
+        # PUT endpoint to update device details
+        @self.app.route('/devices/<device_serial>', methods=['PUT'])
+        def update_device(device_serial):
+            print(f"DEBUG: PUT /devices/{device_serial} endpoint was called")
+            data = request.json
+
+            if not data:
+                return jsonify({"error": "No data provided"}), 400
+
+            query = """
+                UPDATE devices 
+                SET name = %s, type = %s, area = %s, building = %s, floor = %s
+                WHERE device_serial = %s
+            """
+            values = (
+                data.get('name'),
+                data.get('type'),
+                data.get('area'),
+                data.get('building'),
+                data.get('floor'),
+                device_serial
+            )
+
+            try:
+                self.db_manager.execute_query(query, values=values, fetch=False)
+                return jsonify({"message": f"Device {device_serial} updated successfully"}), 200
+            except Exception as e:
+                print(f"Error updating device: {e}")
+                return jsonify({"error": f"Failed to update device: {str(e)}"}), 500
 
         # DELETE endpoint to remove a device from the "devices" table
         @self.app.route('/devices/<device_serial>', methods=['DELETE'])
