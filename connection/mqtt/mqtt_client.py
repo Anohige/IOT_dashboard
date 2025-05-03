@@ -7,6 +7,7 @@ import threading
 import logging
 import ssl
 from datetime import datetime
+from DAQ.daq import DAQ
 
 # Configure logging with more detail
 logging.basicConfig(
@@ -36,6 +37,7 @@ class MqttClient:
         self.client = None
         self.file_manager = file_manager
         self.system_stats = system_stats
+        self.daq = DAQ()
         self.connect_retries = 0
         self.max_retries = 5
         self.subscription_mid = None  # Store message ID for subscription
@@ -274,7 +276,7 @@ class MqttClient:
                     }
 
                 # Add device ID
-                stats["device_serial"] = self.file_manager._get_device_serial()
+                stats["device_serial"] = self.daq.get_rpi_serial()
                 stats["timestamp"] = time.time()
 
                 # Convert to JSON
