@@ -7,7 +7,6 @@ import threading
 import logging
 import ssl
 from datetime import datetime
-from DAQ.daq import DAQ
 
 # Configure logging with more detail
 logging.basicConfig(
@@ -27,6 +26,7 @@ class MqttClient:
             rules_topic="iot/rules/updated",
             stats_topic="iot/device/stats",
             system_stats=None,
+            daq=None
     ):
         self.broker = broker
         self.port = port
@@ -37,14 +37,61 @@ class MqttClient:
         self.client = None
         self.file_manager = file_manager
         self.system_stats = system_stats
-        self.daq = DAQ()
+        self.daq = daq  # Store the provided DAQ instance
         self.connect_retries = 0
         self.max_retries = 5
         self.subscription_mid = None  # Store message ID for subscription
         self.use_websockets = use_websockets
 
+        # Try to get device serial
+        self.device_serial = self._get_device_serial()
+        logger.info(f"MQTT client initialized with device serial: {self.device_serial}")
+
         # Initialize MQTT client
         self._initialize_client()
+
+    def _get_device_serial(self):
+        """Get device serial from DAQ or other sources."""
+        # Try to get from DAQ instance
+        if self.daq and hasattr(self.daq, 'get_rpi_serial'):
+            try:
+                serial = self.daq.get_rpi_serial()
+                if serial and serial != "UNKNOWN":
+                    logger.info(f"Got device serial from DAQ: {serial}")
+                    return serial
+            except Exception as e:
+                logger.error(f"Error getting serial from DAQ: {e}")
+
+        # Try to get from FileManager
+        if self.file_manager and hasattr(self.file_manager, '_get_device_serial'):
+            try:
+                serial = self.file_manager._get_device_serial()
+                if serial:
+                    logger.info(f"Got device serial from FileManager: {serial}")
+                    return serial
+            except Exception as e:
+                logger.error(f"Error getting serial from FileManager: {e}")
+
+        # Fallback: Try to read from device_info.json
+        try:
+            device_info_path = os.path.join(
+                os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                "device_info.json"
+            )
+            if os.path.exists(device_info_path):
+                with open(device_info_path, 'r') as f:
+                    device_info = json.load(f)
+                    if "device_serial" in device_info:
+                        serial = device_info["device_serial"]
+                        logger.info(f"Got device serial from device_info.json: {serial}")
+                        return serial
+        except Exception as e:
+            logger.error(f"Error reading device_info.json: {e}")
+
+        # Last resort fallback
+        default_serial = "DEV_DEVICE"
+        logger.warning(f"No device serial found, using default: {default_serial}")
+        return default_serial
 
     def _initialize_client(self):
         """Initialize the MQTT client with proper settings."""
@@ -93,6 +140,7 @@ class MqttClient:
             # Start publishing system stats in a separate thread if system stats module is provided
             if self.system_stats:
                 threading.Thread(target=self.publish_system_stats, daemon=True).start()
+                logger.info("Started system stats publishing thread")
 
             return True
         except Exception as e:
@@ -131,6 +179,7 @@ class MqttClient:
 
             # Also subscribe to test topic to validate subscription works
             self.client.subscribe("test/debug", qos=1)
+            logger.info("Subscribed to test/debug topic")
 
             # Publish a test message
             self.publish_test_message()
@@ -222,10 +271,22 @@ class MqttClient:
                 logger.warning("Missing required field 'expression' in rule data")
                 return
 
+            # Always update device serial before handling rules
+            self.device_serial = self._get_device_serial()
+
+            # Check if device_serial is in the rule
+            if 'device_serial' not in rule_data:
+                # Add our device serial to the rule
+                rule_data['device_serial'] = self.device_serial
+                logger.info(f"Added device_serial {self.device_serial} to rule")
+
             # Process the rule
             if self.file_manager:
-                self.file_manager.append_rule(rule_data)
-                logger.info(f"Rule saved successfully")
+                result = self.file_manager.append_rule(rule_data)
+                if result:
+                    logger.info("Rule saved successfully")
+                else:
+                    logger.warning("Rule was not saved")
             else:
                 logger.warning("No file manager available to save rule")
 
@@ -245,24 +306,39 @@ class MqttClient:
     def publish_test_message(self):
         """Publish a test message to verify connection."""
         try:
+            # Update device serial
+            self.device_serial = self._get_device_serial()
+
             test_msg = {
                 "type": "test",
                 "client_id": self.client_id,
+                "device_serial": self.device_serial,
                 "timestamp": time.time(),
                 "message": "Test message from backend"
             }
-            self.client.publish("test/debug", json.dumps(test_msg), qos=1)
-            logger.info("Published test message")
+
+            result = self.client.publish("test/debug", json.dumps(test_msg), qos=1)
+            logger.info(f"Published test message, result: {result.rc}")
+
+            if result.rc != 0:
+                logger.error(f"Failed to publish test message, result code: {result.rc}")
+
         except Exception as e:
-            logger.error(f"Error publishing test message: {e}")
+            logger.error(f"Error publishing test message: {e}", exc_info=True)
 
     def publish_system_stats(self):
         """Periodically publish system stats to MQTT."""
+        logger.info("Starting system stats publishing loop")
+
         while self.connected:
             try:
-                # Example stats - replace with your actual system stats
+                # Always refresh device serial before publishing
+                self.device_serial = self._get_device_serial()
+
+                # Get system stats
                 if self.system_stats:
                     stats = self.system_stats.get_system_stats()
+                    logger.debug(f"Got system stats: {stats}")
                 else:
                     # Generate dummy stats for testing
                     import random
@@ -271,20 +347,22 @@ class MqttClient:
                         "ram_usage": random.randint(20, 85),
                         "disk_usage": random.randint(30, 95),
                         "temperature": random.randint(25, 75),
-                        "humidity": random.randint(30, 70),
-                        "timestamp": time.time()
+                        "humidity": random.randint(30, 70)
                     }
+                    logger.debug("Generated dummy stats")
 
-                # Add device ID
-                stats["device_serial"] = self.daq.get_rpi_serial()
+                # Add device serial and timestamp
+                stats["device_serial"] = self.device_serial
                 stats["timestamp"] = time.time()
 
                 # Convert to JSON
                 payload = json.dumps(stats)
+                logger.debug(f"Stats payload: {payload}")
 
                 # Publish with QoS 1 for more reliable delivery
                 result = self.client.publish(self.stats_topic, payload, qos=1)
                 logger.info(f"Published stats: {result.rc == 0}")
+
                 if result.rc != 0:
                     logger.error(f"Failed to publish stats, result code: {result.rc}")
 
@@ -292,6 +370,7 @@ class MqttClient:
                 logger.error(f"Error publishing stats: {e}", exc_info=True)
 
             # Wait before publishing again
+            logger.debug("Waiting 5 seconds before next stats publish")
             time.sleep(5)
 
     def publish_message(self, topic, message, qos=1):

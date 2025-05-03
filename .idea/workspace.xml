@@ -6,6 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="e71a34ca-43b5-484d-976b-df1fe0f1576e" name="Changes" comment="checking for raspberry pi">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/connection/mqtt/mqtt_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/connection/mqtt/mqtt_client.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/connection/server/server.py" beforeDir="false" afterPath="$PROJECT_DIR$/connection/server/server.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -159,23 +161,7 @@
       <workItem from="1746187806849" duration="3000" />
       <workItem from="1746188301959" duration="61000" />
       <workItem from="1746188657802" duration="8696000" />
-      <workItem from="1746296245940" duration="1639000" />
-    </task>
-    <task id="LOCAL-00007" summary="Changes to daq">
-      <option name="closed" value="true" />
-      <created>1738689663223</created>
-      <option name="number" value="00007" />
-      <option name="presentableId" value="LOCAL-00007" />
-      <option name="project" value="LOCAL" />
-      <updated>1738689663223</updated>
-    </task>
-    <task id="LOCAL-00008" summary="Changes to daq">
-      <option name="closed" value="true" />
-      <created>1738783258101</created>
-      <option name="number" value="00008" />
-      <option name="presentableId" value="LOCAL-00008" />
-      <option name="project" value="LOCAL" />
-      <updated>1738783258101</updated>
+      <workItem from="1746296245940" duration="2238000" />
     </task>
     <task id="LOCAL-00009" summary="changes">
       <option name="closed" value="true" />
@@ -553,7 +539,23 @@
       <option name="project" value="LOCAL" />
       <updated>1746297312226</updated>
     </task>
-    <option name="localTasksCounter" value="56" />
+    <task id="LOCAL-00056" summary="checking for raspberry pi">
+      <option name="closed" value="true" />
+      <created>1746297897712</created>
+      <option name="number" value="00056" />
+      <option name="presentableId" value="LOCAL-00056" />
+      <option name="project" value="LOCAL" />
+      <updated>1746297897712</updated>
+    </task>
+    <task id="LOCAL-00057" summary="checking for raspberry pi">
+      <option name="closed" value="true" />
+      <created>1746297950024</created>
+      <option name="number" value="00057" />
+      <option name="presentableId" value="LOCAL-00057" />
+      <option name="project" value="LOCAL" />
+      <updated>1746297950024</updated>
+    </task>
+    <option name="localTasksCounter" value="58" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
