@@ -1,5 +1,0 @@
-[
-  {
-    "expression": "IF(sensor1 > 10) THEN\nalert.sms\nENDIF"
-  }
-]

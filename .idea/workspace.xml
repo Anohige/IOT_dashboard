@@ -4,9 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e71a34ca-43b5-484d-976b-df1fe0f1576e" name="Changes" comment="added delete changed mqtt broker">
+    <list default="true" id="e71a34ca-43b5-484d-976b-df1fe0f1576e" name="Changes" comment="server changes for deleting">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/connection/server/server.py" beforeDir="false" afterPath="$PROJECT_DIR$/connection/server/server.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/File_manager/file_manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/File_manager/file_manager.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/connection/mqtt/mqtt_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/connection/mqtt/mqtt_client.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/rules.json" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -156,15 +158,10 @@
       <workItem from="1743619217582" duration="462000" />
       <workItem from="1743690964282" duration="1971000" />
       <workItem from="1745593208414" duration="6595000" />
-      <workItem from="1745864102947" duration="17543000" />
-    </task>
-    <task id="LOCAL-00004" summary="Adding requirements.txt">
-      <option name="closed" value="true" />
-      <created>1738526679808</created>
-      <option name="number" value="00004" />
-      <option name="presentableId" value="LOCAL-00004" />
-      <option name="project" value="LOCAL" />
-      <updated>1738526679808</updated>
+      <workItem from="1745864102947" duration="21636000" />
+      <workItem from="1746187806849" duration="3000" />
+      <workItem from="1746188301959" duration="61000" />
+      <workItem from="1746188657802" duration="8565000" />
     </task>
     <task id="LOCAL-00005" summary="Changes to daq">
       <option name="closed" value="true" />
@@ -550,7 +547,15 @@
       <option name="project" value="LOCAL" />
       <updated>1746104756777</updated>
     </task>
-    <option name="localTasksCounter" value="53" />
+    <task id="LOCAL-00053" summary="server changes for deleting">
+      <option name="closed" value="true" />
+      <created>1746112822418</created>
+      <option name="number" value="00053" />
+      <option name="presentableId" value="LOCAL-00053" />
+      <option name="project" value="LOCAL" />
+      <updated>1746112822418</updated>
+    </task>
+    <option name="localTasksCounter" value="54" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -586,7 +591,8 @@
     <MESSAGE value="backtracked" />
     <MESSAGE value="some new chages to mod" />
     <MESSAGE value="added delete changed mqtt broker" />
-    <option name="LAST_COMMIT_MESSAGE" value="added delete changed mqtt broker" />
+    <MESSAGE value="server changes for deleting" />
+    <option name="LAST_COMMIT_MESSAGE" value="server changes for deleting" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -601,6 +607,6 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/python$app.coverage" NAME="app Coverage Results" MODIFIED="1734709217106" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/python$main.coverage" NAME="main Coverage Results" MODIFIED="1746112269722" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/python$main.coverage" NAME="main Coverage Results" MODIFIED="1746282360730" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
