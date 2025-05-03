@@ -7,7 +7,8 @@ import threading
 import logging
 import ssl
 from datetime import datetime
-
+import socket
+from File_manager.file_manager import FileManager
 # Configure logging with more detail
 logging.basicConfig(
     level=logging.DEBUG,
@@ -19,14 +20,13 @@ logger = logging.getLogger(__name__)
 class MqttClient:
     def __init__(
             self,
-            file_manager=None,
-            broker="broker.emqx.io",  # EMQX broker
-            port=8083,  # EMQX WebSocket port
-            use_websockets=True,
+            file_manager=FileManager(),
+            broker="broker.emqx.io",
+            port=1883,  # Using standard MQTT port instead of WebSocket
+            use_websockets=False,  # Disable WebSockets for more reliable connection
             rules_topic="iot/rules/updated",
             stats_topic="iot/device/stats",
             system_stats=None,
-            daq=None
     ):
         self.broker = broker
         self.port = port
@@ -37,64 +37,48 @@ class MqttClient:
         self.client = None
         self.file_manager = file_manager
         self.system_stats = system_stats
-        self.daq = daq  # Store the provided DAQ instance
         self.connect_retries = 0
         self.max_retries = 5
         self.subscription_mid = None  # Store message ID for subscription
         self.use_websockets = use_websockets
 
-        # Try to get device serial
-        self.device_serial = self._get_device_serial()
-        logger.info(f"MQTT client initialized with device serial: {self.device_serial}")
+        # Check network connectivity before proceeding
+        self._check_connectivity()
 
         # Initialize MQTT client
         self._initialize_client()
 
-    def _get_device_serial(self):
-        """Get device serial from DAQ or other sources."""
-        # Try to get from DAQ instance
-        if self.daq and hasattr(self.daq, 'get_rpi_serial'):
-            try:
-                serial = self.daq.get_rpi_serial()
-                if serial and serial != "UNKNOWN":
-                    logger.info(f"Got device serial from DAQ: {serial}")
-                    return serial
-            except Exception as e:
-                logger.error(f"Error getting serial from DAQ: {e}")
-
-        # Try to get from FileManager
-        if self.file_manager and hasattr(self.file_manager, '_get_device_serial'):
-            try:
-                serial = self.file_manager._get_device_serial()
-                if serial:
-                    logger.info(f"Got device serial from FileManager: {serial}")
-                    return serial
-            except Exception as e:
-                logger.error(f"Error getting serial from FileManager: {e}")
-
-        # Fallback: Try to read from device_info.json
+    def _check_connectivity(self):
+        """Check basic network connectivity to the broker"""
         try:
-            device_info_path = os.path.join(
-                os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                "device_info.json"
-            )
-            if os.path.exists(device_info_path):
-                with open(device_info_path, 'r') as f:
-                    device_info = json.load(f)
-                    if "device_serial" in device_info:
-                        serial = device_info["device_serial"]
-                        logger.info(f"Got device serial from device_info.json: {serial}")
-                        return serial
-        except Exception as e:
-            logger.error(f"Error reading device_info.json: {e}")
+            # Try to resolve the hostname
+            logger.info(f"Resolving hostname: {self.broker}")
+            host_ip = socket.gethostbyname(self.broker)
+            logger.info(f"Resolved {self.broker} to IP: {host_ip}")
 
-        # Last resort fallback
-        default_serial = "DEV_DEVICE"
-        logger.warning(f"No device serial found, using default: {default_serial}")
-        return default_serial
+            # Try to establish a socket connection
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            result = sock.connect_ex((host_ip, self.port))
+            sock.close()
+
+            if result == 0:
+                logger.info(f"Socket connection to {self.broker}:{self.port} successful")
+            else:
+                logger.warning(f"Socket connection to {self.broker}:{self.port} failed with code: {result}")
+        except Exception as e:
+            logger.error(f"Connectivity check failed: {e}")
 
     def _initialize_client(self):
         """Initialize the MQTT client with proper settings."""
+        # Clean up any existing client
+        if self.client:
+            try:
+                self.client.loop_stop()
+                self.client.disconnect()
+            except:
+                pass
+
         if self.use_websockets:
             self.client = paho_mqtt.Client(
                 client_id=self.client_id,
@@ -115,7 +99,7 @@ class MqttClient:
         self.client.on_subscribe = self.on_subscribe
         self.client.on_publish = self.on_publish
 
-        # Set a longer keepalive time
+        # Enable logger
         self.client.enable_logger(logger)
 
     def connect_and_loop(self):
@@ -123,19 +107,37 @@ class MqttClient:
         logger.info(f"Connecting to {self.broker}:{self.port}")
         try:
             # Increase keepalive interval to avoid disconnections
-            self.client.connect(self.broker, self.port, keepalive=120)
+            self.client.connect(self.broker, self.port, keepalive=60)
             self.client.loop_start()
             logger.info("MQTT loop started (non-blocking)")
 
             # Wait for connection to be established
             retry_count = 0
-            while not self.connected and retry_count < 5:
+            while not self.connected and retry_count < 10:  # Increased retry count
                 time.sleep(1)
                 retry_count += 1
+                logger.info(f"Waiting for connection... {retry_count}/10")
 
             if not self.connected:
-                logger.error("Failed to connect to broker after 5 seconds")
-                return False
+                logger.error("Failed to connect to broker after 10 seconds")
+                # Try alternative broker if primary fails
+                if self.broker == "broker.emqx.io":
+                    logger.info("Trying alternative broker: test.mosquitto.org")
+                    self.broker = "test.mosquitto.org"
+                    self.client.loop_stop()
+                    self._initialize_client()
+                    self.client.connect(self.broker, self.port, keepalive=60)
+                    self.client.loop_start()
+
+                    # Wait again for connection
+                    retry_count = 0
+                    while not self.connected and retry_count < 10:
+                        time.sleep(1)
+                        retry_count += 1
+                        logger.info(f"Waiting for connection to alternate broker... {retry_count}/10")
+
+                if not self.connected:
+                    return False
 
             # Start publishing system stats in a separate thread if system stats module is provided
             if self.system_stats:
@@ -146,14 +148,6 @@ class MqttClient:
         except Exception as e:
             logger.error(f"Connection error: {e}", exc_info=True)
             return False
-
-    def stop(self):
-        """Stop MQTT loop and disconnect."""
-        logger.info("Stopping MQTT client...")
-        if self.client:
-            self.client.loop_stop()
-            self.client.disconnect()
-            self.connected = False
 
     def on_connect(self, client, userdata, flags, rc):
         """Handle connection response."""
@@ -248,9 +242,8 @@ class MqttClient:
 
     def on_log(self, client, userdata, level, buf):
         """Log MQTT client internal messages."""
-        # Only log important messages to reduce noise
-        if level in [paho_mqtt.MQTT_LOG_ERR, paho_mqtt.MQTT_LOG_WARNING]:
-            logger.debug(f"MQTT Log: {buf}")
+        # Log all messages during debugging
+        logger.debug(f"MQTT Log: {buf}")
 
     def handle_rules_message(self, payload):
         """Handle rules topic messages."""
@@ -271,31 +264,48 @@ class MqttClient:
                 logger.warning("Missing required field 'expression' in rule data")
                 return
 
-            # Always update device serial before handling rules
-            self.device_serial = self._get_device_serial()
-
-            # Check if device_serial is in the rule
-            if 'device_serial' not in rule_data:
-                # Add our device serial to the rule
-                rule_data['device_serial'] = self.device_serial
-                logger.info(f"Added device_serial {self.device_serial} to rule")
-
             # Process the rule
             if self.file_manager:
-                result = self.file_manager.append_rule(rule_data)
-                if result:
-                    logger.info("Rule saved successfully")
-                else:
-                    logger.warning("Rule was not saved")
+                # Try to call append_rule and get the result
+                try:
+                    result = self.file_manager.append_rule(rule_data)
+                    if result:
+                        logger.info("Rule saved successfully")
+                    else:
+                        logger.warning("Rule was not saved (might be for another device)")
+                except Exception as e:
+                    logger.error(f"Error calling append_rule: {e}")
+                    # Try a direct approach if the expected method isn't available
+                    if hasattr(self.file_manager, 'rules_file'):
+                        try:
+                            # Get existing rules
+                            existing_rules = []
+                            if os.path.exists(self.file_manager.rules_file):
+                                with open(self.file_manager.rules_file, 'r') as f:
+                                    existing_rules = json.load(f)
+
+                            # Add new rule
+                            existing_rules.append({"expression": rule_data["expression"]})
+
+                            # Save back to file
+                            with open(self.file_manager.rules_file, 'w') as f:
+                                json.dump(existing_rules, f, indent=2)
+
+                            logger.info("Rule saved using direct file access")
+                        except Exception as e2:
+                            logger.error(f"Error saving rule directly: {e2}")
             else:
                 logger.warning("No file manager available to save rule")
 
             # Echo the rule back for debugging
-            self.client.publish("iot/rules/received", json.dumps({
-                "status": "received",
-                "timestamp": time.time(),
-                "rule": rule_data
-            }))
+            try:
+                self.client.publish("iot/rules/received", json.dumps({
+                    "status": "received",
+                    "timestamp": time.time(),
+                    "rule": rule_data
+                }))
+            except Exception as e:
+                logger.error(f"Error publishing receipt confirmation: {e}")
 
         except json.JSONDecodeError as e:
             logger.error(f"Invalid JSON in rules topic: {e}")
@@ -306,19 +316,25 @@ class MqttClient:
     def publish_test_message(self):
         """Publish a test message to verify connection."""
         try:
-            # Update device serial
-            self.device_serial = self._get_device_serial()
+            # Try to get device serial if available
+            device_serial = "UNKNOWN"
+            if hasattr(self, 'file_manager') and hasattr(self.file_manager, '_get_device_serial'):
+                try:
+                    device_serial = self.file_manager._get_device_serial() or "UNKNOWN"
+                except:
+                    pass
 
             test_msg = {
                 "type": "test",
                 "client_id": self.client_id,
-                "device_serial": self.device_serial,
+                "device_serial": device_serial,
                 "timestamp": time.time(),
                 "message": "Test message from backend"
             }
 
+            logger.info(f"Publishing test message: {test_msg}")
             result = self.client.publish("test/debug", json.dumps(test_msg), qos=1)
-            logger.info(f"Published test message, result: {result.rc}")
+            logger.info(f"Published test message, result code: {result.rc}, message ID: {result._mid}")
 
             if result.rc != 0:
                 logger.error(f"Failed to publish test message, result code: {result.rc}")
@@ -330,48 +346,109 @@ class MqttClient:
         """Periodically publish system stats to MQTT."""
         logger.info("Starting system stats publishing loop")
 
+        # Publish immediately on start
+        self._publish_current_stats()
+
+        # Then continue with regular interval
         while self.connected:
             try:
-                # Always refresh device serial before publishing
-                self.device_serial = self._get_device_serial()
+                time.sleep(5)  # Wait before next publish
+                if not self.connected:
+                    logger.warning("Lost connection, stopping stats publishing")
+                    break
 
-                # Get system stats
-                if self.system_stats:
-                    stats = self.system_stats.get_system_stats()
-                    logger.debug(f"Got system stats: {stats}")
-                else:
-                    # Generate dummy stats for testing
-                    import random
-                    stats = {
-                        "cpu_usage": random.randint(10, 90),
-                        "ram_usage": random.randint(20, 85),
-                        "disk_usage": random.randint(30, 95),
-                        "temperature": random.randint(25, 75),
-                        "humidity": random.randint(30, 70)
-                    }
-                    logger.debug("Generated dummy stats")
-
-                # Add device serial and timestamp
-                stats["device_serial"] = self.device_serial
-                stats["timestamp"] = time.time()
-
-                # Convert to JSON
-                payload = json.dumps(stats)
-                logger.debug(f"Stats payload: {payload}")
-
-                # Publish with QoS 1 for more reliable delivery
-                result = self.client.publish(self.stats_topic, payload, qos=1)
-                logger.info(f"Published stats: {result.rc == 0}")
-
-                if result.rc != 0:
-                    logger.error(f"Failed to publish stats, result code: {result.rc}")
+                self._publish_current_stats()
 
             except Exception as e:
-                logger.error(f"Error publishing stats: {e}", exc_info=True)
+                logger.error(f"Error in publish loop: {e}", exc_info=True)
+                time.sleep(5)  # Wait before retry
 
-            # Wait before publishing again
-            logger.debug("Waiting 5 seconds before next stats publish")
-            time.sleep(5)
+    def _publish_current_stats(self):
+        """Get and publish current system stats"""
+        if not self.connected:
+            logger.warning("Not connected, skipping stats publish")
+            return
+
+        try:
+            # Try to get device serial if available
+            device_serial = "UNKNOWN"
+            try:
+                # Try multiple sources for device serial
+                if hasattr(self, 'file_manager') and hasattr(self.file_manager, '_get_device_serial'):
+                    device_serial = self.file_manager._get_device_serial() or device_serial
+
+                # Try to read from device_info.json as fallback
+                if device_serial == "UNKNOWN":
+                    try:
+                        device_info_path = os.path.join(
+                            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                            "device_info.json"
+                        )
+                        if os.path.exists(device_info_path):
+                            with open(device_info_path, 'r') as f:
+                                device_info = json.load(f)
+                                if "device_serial" in device_info:
+                                    device_serial = device_info["device_serial"]
+                    except:
+                        pass
+            except Exception as e:
+                logger.error(f"Error getting device serial: {e}")
+
+            logger.info(f"Using device_serial: {device_serial}")
+
+            # Get system stats
+            if self.system_stats:
+                stats = self.system_stats.get_system_stats()
+                logger.info(f"Got real system stats: {stats}")
+            else:
+                # Generate dummy stats for testing
+                import random
+                stats = {
+                    "cpu_usage": random.randint(10, 90),
+                    "ram_usage": random.randint(20, 85),
+                    "disk_usage": random.randint(30, 95),
+                    "temperature": random.randint(25, 75),
+                    "humidity": random.randint(30, 70)
+                }
+                logger.info("Generated dummy stats")
+
+            # Add device serial and timestamp
+            stats["device_serial"] = device_serial
+            stats["timestamp"] = time.time()
+
+            # Convert to JSON
+            payload = json.dumps(stats)
+            logger.info(f"Stats payload prepared: {payload}")
+
+            # Debug broker connection
+            logger.info(f"MQTT connection status: connected={self.connected}, client_id={self.client_id}")
+
+            # Double-check connection
+            if not self.connected or not self.client:
+                logger.error("Cannot publish - no active connection")
+                return
+
+            # Publish with QoS 1 for more reliable delivery
+            logger.info(f"Publishing to {self.stats_topic}")
+            result = self.client.publish(self.stats_topic, payload, qos=1)
+            logger.info(f"Publish result: {result}")
+            logger.info(f"Result code: {result.rc}, message ID: {result._mid}")
+
+            if result.rc != 0:
+                logger.error(f"Failed to publish stats, result code: {result.rc}")
+                raise Exception(f"Publish failed with code {result.rc}")
+            else:
+                logger.info("Successfully published stats message")
+
+        except Exception as e:
+            logger.error(f"Error publishing stats: {e}", exc_info=True)
+            # Try to reconnect if there was a publishing error
+            if self.client:
+                try:
+                    logger.info("Attempting to reconnect after publish error")
+                    self.client.reconnect()
+                except:
+                    logger.error("Reconnection failed after publish error")
 
     def publish_message(self, topic, message, qos=1):
         """Publish a custom message to a specified topic."""

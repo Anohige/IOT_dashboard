@@ -124,6 +124,43 @@ class FileManager:
             logger.error(f"Error saving rules file: {e}")
             return False
 
+    # Add this method to your existing FileManager class
+    # This allows the MQTT client to get the device serial from your FileManager
+
+    def _get_device_serial(self):
+        """
+        Read device serial from the device_info.json file or from the DAQ.
+        Returns the device serial or None if not found.
+        """
+        # First try to use DAQ (for RPi serial) if available
+        try:
+            from DAQ.daq import DAQ
+            daq = DAQ()
+            serial = daq.get_rpi_serial()
+            if serial and serial != "UNKNOWN":
+                return serial
+        except:
+            pass
+
+        # Next try to read from device_info.json
+        try:
+            if os.path.exists(self.device_info_file if hasattr(self, 'device_info_file') else "device_info.json"):
+                with open(self.device_info_file if hasattr(self, 'device_info_file') else "device_info.json", "r") as f:
+                    device_info = json.load(f)
+
+                # Check for device_serial in the file
+                if "device_serial" in device_info:
+                    return device_info["device_serial"]
+        except Exception as e:
+            print(f"Error reading device_info.json: {e}")
+
+        # If we've gotten this far without finding a serial, try to get it from the temp_valid_device_serial
+        if hasattr(self, 'temp_valid_device_serial'):
+            return self.temp_valid_device_serial
+
+        # Last resort
+        return "58969696969"  # Default fallback
+
     def get_rules(self):
         """
         Get all rules from the rules file.
