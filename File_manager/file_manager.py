@@ -12,7 +12,7 @@ class FileManager:
     A class to handle storing and retrieving rules in a JSON file.
     """
 
-    def __init__(self, rules_file=None, device_info_file=None):
+    def __init__(self, rules_file=None, daq=None):
         # Set up rules file path
         if rules_file is None:
             # By default, store 'rules.json' in the same directory as file_manager.py
@@ -20,50 +20,18 @@ class FileManager:
             rules_file = os.path.join(parent_dir, "rules.json")
         self.rules_file = rules_file
 
-        # Set up device info file path
-        if device_info_file is None:
-            # By default, look for device_info.json in the same directory as rules.json
-            parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            device_info_file = os.path.join(parent_dir, "device_info.json")
-        self.device_info_file = device_info_file
+        # Store the DAQ instance or create one if not provided
+        self.daq = daq
+        if self.daq is None:
+            # Import here to avoid circular imports
+            from your_daq_module_path import DAQ
+            self.daq = DAQ()
 
-        # Try to load the device serial from device_info file
-        self.device_serial = self._get_device_serial()
+        # Get device serial from DAQ
+        self.device_serial = self.daq.serial_number
 
         logger.info(f"FileManager initialized. Saving rules to: {self.rules_file}")
         logger.info(f"Device serial: {self.device_serial or 'Not found'}")
-
-    def _get_device_serial(self):
-        """
-        Read device serial from the device_info.json file.
-        Returns the device serial or None if not found.
-        """
-        try:
-            if os.path.exists(self.device_info_file):
-                with open(self.device_info_file, "r") as f:
-                    device_info = json.load(f)
-
-                # Check different possible keys that might contain the serial
-                for key in ["device_serial", "serial", "id", "device_id"]:
-                    if key in device_info:
-                        logger.info(f"Found device serial in key '{key}': {device_info[key]}")
-                        return device_info[key]
-
-                logger.warning(f"Device serial not found in {self.device_info_file}")
-                return None
-            else:
-                # If device_info file doesn't exist, create it with a default serial
-                # This is a fallback for testing - in production you'd want to handle this differently
-                default_serial = "58969696969"  # Using your temp ID as default
-                os.makedirs(os.path.dirname(self.device_info_file), exist_ok=True)
-                with open(self.device_info_file, "w") as f:
-                    json.dump({"device_serial": default_serial}, f, indent=2)
-                logger.warning(f"Created device_info.json with default serial: {default_serial}")
-                return default_serial
-
-        except Exception as e:
-            logger.error(f"Error reading device_info file: {e}")
-            return None
 
     def append_rule(self, new_rule_obj):
         """
@@ -88,10 +56,6 @@ class FileManager:
         if not received_device_serial:
             logger.warning("No 'device_serial' in rule object. Not appending.")
             return False
-
-        # Ensure we have loaded the latest device serial
-        if not self.device_serial:
-            self.device_serial = self._get_device_serial()
 
         # Compare with quotes stripped if present
         if isinstance(received_device_serial, str) and received_device_serial.startswith(
