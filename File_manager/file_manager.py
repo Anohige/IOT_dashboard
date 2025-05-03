@@ -1,6 +1,7 @@
 import json
 import os
 import logging
+from DAQ.daq import DAQ
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -21,12 +22,7 @@ class FileManager:
         self.rules_file = rules_file
 
         # Store the DAQ instance or create one if not provided
-        self.daq = daq
-        if self.daq is None:
-            # Import here to avoid circular imports
-            from your_daq_module_path import DAQ
-            self.daq = DAQ()
-
+        self.daq = DAQ()
         # Get device serial from DAQ
         self.device_serial = self.daq.serial_number
 
