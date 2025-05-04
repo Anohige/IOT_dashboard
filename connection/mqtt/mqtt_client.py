@@ -171,13 +171,14 @@ class MqttClient:
                 if self.system_stats:
                     stats = self.system_stats.get_system_stats()
                 else:
-                    stats = {
-                        "cpu_usage": random.randint(10, 90),
-                        "ram_usage": random.randint(20, 85),
-                        "disk_usage": random.randint(30, 95),
-                        "temperature": random.randint(25, 75),
-                        "humidity": random.randint(30, 70),
-                    }
+                    # stats = {
+                    #     "cpu_usage": random.randint(10, 90),
+                    #     "ram_usage": random.randint(20, 85),
+                    #     "disk_usage": random.randint(30, 95),
+                    #     "temperature": random.randint(25, 75),
+                    #     "humidity": random.randint(30, 70),
+                    # }
+                    print("FAILED")
 
                 stats["device_serial"] = self.device_serial
                 stats["timestamp"] = time.time()
