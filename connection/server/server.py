@@ -15,7 +15,7 @@ class Server:
         self.app = Flask(__name__)
 
         # Enable CORS for all origins with more options
-        CORS(self.app, resources={r"/*": {"origins": "*", "methods": ["GET", "POST", "PUT", "DELETE"]}})
+        CORS(self.app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
         # Use provided DB manager or create a new one
         self.db_manager = db_manager if db_manager else DBManager()
@@ -195,6 +195,14 @@ class Server:
                 logger.error(f"Error getting device info: {e}")
                 return jsonify({"error": f"Failed to get device info: {str(e)}"}), 500
 
+        @self.app.after_request
+        def after_request(response):
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+            response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+            return response
+
     def run(self, host='0.0.0.0', port=5001, debug=True):
         logger.info(f"Starting server on {host}:{port}")
         self.app.run(host=host, port=port, debug=debug)
+
