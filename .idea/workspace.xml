@@ -5,10 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e71a34ca-43b5-484d-976b-df1fe0f1576e" name="Changes" comment="checking for raspberry pi">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/File_manager/file_manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/File_manager/file_manager.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dependency_injector.py" beforeDir="false" afterPath="$PROJECT_DIR$/dependency_injector.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/connection/mqtt/mqtt_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/connection/mqtt/mqtt_client.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -163,15 +161,7 @@
       <workItem from="1746188301959" duration="61000" />
       <workItem from="1746188657802" duration="8696000" />
       <workItem from="1746296245940" duration="7134000" />
-      <workItem from="1746365895020" duration="3922000" />
-    </task>
-    <task id="LOCAL-00019" summary="added modality_stats.py">
-      <option name="closed" value="true" />
-      <created>1742405898772</created>
-      <option name="number" value="00019" />
-      <option name="presentableId" value="LOCAL-00019" />
-      <option name="project" value="LOCAL" />
-      <updated>1742405898772</updated>
+      <workItem from="1746365895020" duration="4083000" />
     </task>
     <task id="LOCAL-00020" summary="modified modality_stats.py">
       <option name="closed" value="true" />
@@ -557,7 +547,15 @@
       <option name="project" value="LOCAL" />
       <updated>1746369498437</updated>
     </task>
-    <option name="localTasksCounter" value="68" />
+    <task id="LOCAL-00068" summary="checking for raspberry pi">
+      <option name="closed" value="true" />
+      <created>1746369845472</created>
+      <option name="number" value="00068" />
+      <option name="presentableId" value="LOCAL-00068" />
+      <option name="project" value="LOCAL" />
+      <updated>1746369845472</updated>
+    </task>
+    <option name="localTasksCounter" value="69" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

@@ -21,9 +21,9 @@ class FileManager:
         self.rules_file = rules_file
 
         # Optional DAQ, but we won’t rely on its serial
-        self.daq = daq or DAQ()
+        self.daq = DAQ()
         # Learned when first rule arrives
-        self.device_serial = None
+        self.device_serial = self.daq.get_rpi_serial()
 
         logger.info(f"FileManager initialized, will save to: {self.rules_file}")
         logger.info("Waiting to learn device_serial from incoming rules.")

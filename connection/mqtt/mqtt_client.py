@@ -9,6 +9,7 @@ import sys
 
 import paho.mqtt.client as paho_mqtt
 from File_manager.file_manager import FileManager
+from stats.system_stats import SystemStats
 
 # --- Logging setup ---
 logging.basicConfig(
@@ -31,13 +32,13 @@ class MqttClient:
         system_stats=None,
     ):
         self.device_serial = device_serial  # optional override
-        self.file_manager = file_manager or FileManager()
+        self.file_manager = FileManager()
         self.broker = broker
         self.port = port
         self.use_websockets = use_websockets
         self.rules_topic = rules_topic
         self.stats_topic = stats_topic
-        self.system_stats = system_stats
+        self.system_stats = SystemStats()
 
         self.client_id = f"python_client_{int(time.time())}_{os.getpid()}"
         self.connected = False
@@ -175,13 +176,7 @@ class MqttClient:
                 if self.system_stats:
                     stats = self.system_stats.get_system_stats()
                 else:
-                    stats = {
-                        "cpu_usage": random.uniform(0, 100),
-                        "ram_usage": random.uniform(0, 100),
-                        "disk_usage": random.uniform(0, 100),
-                        "temperature": random.uniform(10, 80),
-                        "humidity": random.uniform(0, 100),
-                    }
+                    print("FAILED")
 
                 # enforce device_serial
                 if self.device_serial:
@@ -193,7 +188,7 @@ class MqttClient:
                 stats["timestamp"] = time.time()
                 payload = json.dumps(stats)
 
-                logger.debug(f"Publishing to `{self.stats_topic}`: {payload}")
+                print(f"Publishing to `{self.stats_topic}`: {payload}")
                 result = self.client.publish(
                     self.stats_topic, payload, qos=1
                 )
