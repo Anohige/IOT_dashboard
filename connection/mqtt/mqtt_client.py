@@ -184,7 +184,7 @@ class MqttClient:
                 stats["timestamp"] = time.time()
 
                 payload = json.dumps(stats)
-                logger.debug(f"Publishing to `{self.stats_topic}`: {payload}")
+                print(f"Publishing to `{self.stats_topic}`: {payload}")
 
                 result = self.client.publish(
                     self.stats_topic, payload, qos=1
