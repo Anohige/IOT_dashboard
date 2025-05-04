@@ -10,7 +10,9 @@ import random
 import sys
 
 import paho.mqtt.client as paho_mqtt
-from File_manager.file_manager import FileManager  # your existing import
+from File_manager.file_manager import FileManager
+from stats.system_stats import SystemStats# your existing import
+from DAQ.daq import DAQ
 
 # --- Logging setup ---
 logging.basicConfig(
@@ -23,16 +25,16 @@ logger = logging.getLogger(__name__)
 class MqttClient:
     def __init__(
         self,
-        device_serial: str,
         file_manager: FileManager = FileManager(),
         broker: str = "broker.emqx.io",
         port: int = 1883,
         use_websockets: bool = False,
         rules_topic: str = "iot/rules/updated",
         stats_topic: str = "iot/device/stats",
-        system_stats=None,
+        system_stats=SystemStats(),
     ):
-        self.device_serial = device_serial
+        self.daq = DAQ()
+        self.device_serial = self.daq.get_rpi_serial()
         self.file_manager = file_manager
         self.broker = broker
         self.port = port
@@ -195,28 +197,3 @@ class MqttClient:
                 logger.exception("Error in publish_system_stats")
 
             time.sleep(5)  # 5s between publishes
-
-
-if __name__ == "__main__":
-    # You can load device_serial from a file or envvar
-    SERIAL = os.getenv("DEVICE_SERIAL", "MY-DEVICE-1234")
-
-    # If you have a real SystemStats helper, import it and pass it here:
-    # from your_system_stats import SystemStats
-    # stats_provider = SystemStats()
-    stats_provider = None  # ← will trigger dummy stats
-
-    client = MqttClient(
-        device_serial=SERIAL,
-        system_stats=stats_provider,
-    )
-    client.connect_and_loop()
-
-    # keep Python alive
-    try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        logger.info("Shutting down…")
-        client.client.loop_stop()
-        client.client.disconnect()

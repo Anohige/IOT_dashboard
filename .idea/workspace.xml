@@ -6,6 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="e71a34ca-43b5-484d-976b-df1fe0f1576e" name="Changes" comment="checking for raspberry pi">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/connection/mqtt/mqtt_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/connection/mqtt/mqtt_client.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -160,15 +161,7 @@
       <workItem from="1746188301959" duration="61000" />
       <workItem from="1746188657802" duration="8696000" />
       <workItem from="1746296245940" duration="7134000" />
-      <workItem from="1746365895020" duration="2193000" />
-    </task>
-    <task id="LOCAL-00013" summary="changes db manager">
-      <option name="closed" value="true" />
-      <created>1739280995195</created>
-      <option name="number" value="00013" />
-      <option name="presentableId" value="LOCAL-00013" />
-      <option name="project" value="LOCAL" />
-      <updated>1739280995195</updated>
+      <workItem from="1746365895020" duration="2735000" />
     </task>
     <task id="LOCAL-00014" summary="changes db manager">
       <option name="closed" value="true" />
@@ -554,7 +547,15 @@
       <option name="project" value="LOCAL" />
       <updated>1746367316582</updated>
     </task>
-    <option name="localTasksCounter" value="62" />
+    <task id="LOCAL-00062" summary="checking for raspberry pi">
+      <option name="closed" value="true" />
+      <created>1746368468972</created>
+      <option name="number" value="00062" />
+      <option name="presentableId" value="LOCAL-00062" />
+      <option name="project" value="LOCAL" />
+      <updated>1746368468972</updated>
+    </task>
+    <option name="localTasksCounter" value="63" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
