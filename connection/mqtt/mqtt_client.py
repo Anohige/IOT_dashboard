@@ -432,8 +432,7 @@ class MqttClient:
             logger.info(f"Publishing to {self.stats_topic}")
             result = self.client.publish(self.stats_topic, payload, qos=1)
             logger.info(f"Publish result: {result}")
-            logger.info(f"Result code: {result.rc}, message ID: {result._mid}")
-
+            logger.info(f"Result code: {result.rc}, message ID: {result.mid}")
             if result.rc != 0:
                 logger.error(f"Failed to publish stats, result code: {result.rc}")
                 raise Exception(f"Publish failed with code {result.rc}")
