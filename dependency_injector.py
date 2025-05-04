@@ -1,60 +1,50 @@
 # dependency_injector.py
-import sys
 
-# 1) Import your classes
+import time
 from File_manager.file_manager import FileManager
 from connection.mqtt.mqtt_client import MqttClient
-from DAQ. daq import DAQ
+from DAQ.daq import DAQ
 from connection.server.server import Server
-#from stats.modality_stats import DHT11Sensor
-import time
 
 
 class DependencyInjector:
     """
-    This class is responsible for creating and injecting dependencies
-    such as MqttClient, FileManager, etc.
+    Creates and wires together:
+      - DAQ
+      - FileManager
+      - MqttClient
+      - Server
     """
 
-    # In dependency_injector.py, modify the constructor
-
     def __init__(self):
-        # 2) Instantiate FileManager
+        # 1) Bring up your DAQ first so you have a Pi serial (if you need it)
+        self.daq = DAQ()
+        print(f"DAQ initialized. Serial = {self.daq.serial_number}")
+
+        # 2) FileManager (it will learn serial on first incoming rule)
         self.file_manager = FileManager()
 
-        # 3) Instantiate MqttClient, injecting file_manager
-        self.mqtt_client = MqttClient(file_manager=self.file_manager)
-        self.daq = DAQ()
+        # 3) MQTT client: inject both your FileManager *and* the Pi serial
+        #    so that stats and rules both carry the correct device_serial
+        self.mqtt_client = MqttClient(
+            device_serial=self.daq.get_rpi_serial(),
+            file_manager=self.file_manager,
+        )
+
+        # 4) HTTP or WebSocket server, etc.
         self.server = Server()
 
-        # Initialize modality stats last, after other GPIO-using components
-        time.sleep(0.5)  # Brief pause to let other initializations settle
+        # give GPIO or other hardware a moment
+        time.sleep(0.5)
 
     def start_mqtt_client(self):
-        """
-        Start the MQTT loop (blocking)
-        """
+        """Connect and start the MQTT background loop."""
         self.mqtt_client.connect_and_loop()
+
     def start_daq(self):
-        """
-        Start the DAQ
-        """
-        print(f"Raspberry Pi Serial: {self.daq.serial_number}")
+        """Begin any DAQ logic (e.g. persistence)."""
         self.daq.store_to_db()
 
     def start_server(self):
+        """Launch your server (blocking)."""
         self.server.run()
-
-
-    # def start_modality_stats(self):
-    #     sensor = DHT11Sensor()
-    #     try:
-    #         while True:
-    #             temp, hum = sensor.read_sensor()
-    #             if temp is not None and hum is not None:
-    #                 print(f"Temperature: {temp}°C, Humidity: {hum}%")
-    #             else:
-    #                 print("Failed to read from sensor.")
-    #             time.sleep(2)  # Ensure well-spaced periodic reads
-    #     except KeyboardInterrupt:
-    #         print("Exiting program.")

@@ -1,5 +1,3 @@
-# backend.py
-
 import json
 import os
 import time
@@ -11,8 +9,6 @@ import sys
 
 import paho.mqtt.client as paho_mqtt
 from File_manager.file_manager import FileManager
-from stats.system_stats import SystemStats# your existing import
-from DAQ.daq import DAQ
 
 # --- Logging setup ---
 logging.basicConfig(
@@ -25,17 +21,17 @@ logger = logging.getLogger(__name__)
 class MqttClient:
     def __init__(
         self,
-        file_manager: FileManager = FileManager(),
+        device_serial: str = None,
+        file_manager: FileManager = None,
         broker: str = "broker.emqx.io",
         port: int = 1883,
         use_websockets: bool = False,
         rules_topic: str = "iot/rules/updated",
         stats_topic: str = "iot/device/stats",
-        system_stats=SystemStats(),
+        system_stats=None,
     ):
-        self.daq = DAQ()
-        self.device_serial = self.daq.get_rpi_serial()
-        self.file_manager = file_manager
+        self.device_serial = device_serial  # optional override
+        self.file_manager = file_manager or FileManager()
         self.broker = broker
         self.port = port
         self.use_websockets = use_websockets
@@ -46,9 +42,9 @@ class MqttClient:
         self.client_id = f"python_client_{int(time.time())}_{os.getpid()}"
         self.connected = False
 
-        # initialize & connect
         self._check_connectivity()
         self._initialize_client()
+
 
     def _check_connectivity(self):
         try:
@@ -65,6 +61,7 @@ class MqttClient:
         except Exception:
             logger.exception("Connectivity check failed")
 
+
     def _initialize_client(self):
         if self.use_websockets:
             self.client = paho_mqtt.Client(
@@ -78,72 +75,70 @@ class MqttClient:
                 client_id=self.client_id, clean_session=True
             )
 
-        # callbacks
-        self.client.on_connect = self.on_connect
+        self.client.on_connect    = self.on_connect
         self.client.on_disconnect = self.on_disconnect
-        self.client.on_message = self.on_message
-        self.client.on_subscribe = self.on_subscribe
-        self.client.on_publish = self.on_publish
+        self.client.on_message    = self.on_message
+        self.client.on_subscribe  = self.on_subscribe
+        self.client.on_publish    = self.on_publish
         self.client.enable_logger(logger)
 
+
     def connect_and_loop(self):
-        """Connect & start I/O loop, then always kick off stats publishing."""
+        """Connect & start loop, then always start stats thread."""
         try:
             logger.info(f"Connecting to MQTT at {self.broker}:{self.port} …")
             self.client.connect(self.broker, self.port, keepalive=60)
             self.client.loop_start()
 
-            # wait up to 10s for on_connect to set self.connected
             for i in range(10):
                 if self.connected:
                     break
                 time.sleep(1)
                 logger.info(f"Waiting for CONNACK… {i+1}/10")
             else:
-                logger.error("Failed to connect in 10s, exiting")
+                logger.error("Failed to connect in 10s")
                 sys.exit(1)
 
-            # once connected, always start stats thread
             threading.Thread(
                 target=self.publish_system_stats, daemon=True
             ).start()
-
         except Exception:
             logger.exception("Failed to start MQTT loop")
             sys.exit(1)
 
-    # --- MQTT callbacks ---
+
+    # ─── MQTT CALLBACKS ──────────────────────────────────────────────────
     def on_connect(self, client, userdata, flags, rc):
-        result_text = {
-            0: "OK",
-            1: "BAD_PROTO",
-            2: "BAD_ID",
-            3: "UNAVAIL",
-            4: "BAD_AUTH",
-            5: "NOT_AUTH",
-        }.get(rc, f"UNKNOWN({rc})")
-        logger.info(f"on_connect → {result_text}")
+        mapping = {
+            0: "OK", 1: "BAD_PROTO", 2: "BAD_ID",
+            3: "UNAVAIL", 4: "BAD_AUTH", 5: "NOT_AUTH"
+        }
+        result = mapping.get(rc, f"UNKNOWN({rc})")
+        logger.info(f"on_connect → {result}")
         if rc == 0:
             self.connected = True
-            # subscribe for rules
             client.subscribe(self.rules_topic, qos=1)
             logger.info(f"Subscribed to rules topic `{self.rules_topic}`")
         else:
-            logger.error(f"Connection failed: {result_text}")
+            logger.error(f"Connection refused: {result}")
+
 
     def on_disconnect(self, client, userdata, rc):
         self.connected = False
         if rc != 0:
-            logger.warning(f"Unexpected DISCONNECT (rc={rc}), retrying in 5s")
+            logger.warning(f"Unexpected DISCONNECT (rc={rc}), will reconnect")
             threading.Timer(5.0, self.client.reconnect).start()
         else:
             logger.info("Clean disconnect")
 
+
     def on_subscribe(self, client, userdata, mid, granted_qos):
         logger.info(f"on_subscribe → mid={mid}, qos={granted_qos}")
 
+
     def on_publish(self, client, userdata, mid):
         logger.debug(f"on_publish → mid={mid}")
+
 
     def on_message(self, client, userdata, msg):
         topic = msg.topic
@@ -153,48 +148,59 @@ class MqttClient:
         if topic == self.rules_topic:
             self.handle_rules_message(payload)
 
-    # --- rules handling unchanged ---
+
+    # ─── RULES HANDLER ───────────────────────────────────────────────────
     def handle_rules_message(self, payload: str):
         try:
-            data = json.loads(payload)
-            # … your existing logic to save via FileManager …
-            logger.info("Processed rules message")
-        except Exception:
-            logger.exception("handle_rules_message error")
+            rule_data = json.loads(payload)
+            logger.info(f"Parsed rule data: {rule_data}")
 
-    # --- stats publishing ---
+            saved = self.file_manager.append_rule(rule_data)
+            if saved:
+                logger.info("Rule saved successfully")
+            else:
+                logger.warning("Rule was not saved (check serial mismatch?)")
+
+        except json.JSONDecodeError:
+            logger.error("Invalid JSON in rules topic")
+        except Exception:
+            logger.exception("Error handling rules message")
+
+
+    # ─── STATS PUBLISHER ─────────────────────────────────────────────────
     def publish_system_stats(self):
         logger.info("Starting stats publisher thread")
         while True:
             try:
-                # real or dummy stats
                 if self.system_stats:
                     stats = self.system_stats.get_system_stats()
                 else:
-                    # stats = {
-                    #     "cpu_usage": random.randint(10, 90),
-                    #     "ram_usage": random.randint(20, 85),
-                    #     "disk_usage": random.randint(30, 95),
-                    #     "temperature": random.randint(25, 75),
-                    #     "humidity": random.randint(30, 70),
-                    # }
-                    print("FAILED")
+                    stats = {
+                        "cpu_usage": random.uniform(0, 100),
+                        "ram_usage": random.uniform(0, 100),
+                        "disk_usage": random.uniform(0, 100),
+                        "temperature": random.uniform(10, 80),
+                        "humidity": random.uniform(0, 100),
+                    }
 
-                stats["device_serial"] = self.device_serial
+                # enforce device_serial
+                if self.device_serial:
+                    stats["device_serial"] = self.device_serial
+                else:
+                    # defer to FileManager’s learned serial if any
+                    stats["device_serial"] = self.file_manager.device_serial or "UNKNOWN"
+
                 stats["timestamp"] = time.time()
-
                 payload = json.dumps(stats)
-                print(f"Publishing to `{self.stats_topic}`: {payload}")
 
+                logger.debug(f"Publishing to `{self.stats_topic}`: {payload}")
                 result = self.client.publish(
                     self.stats_topic, payload, qos=1
                 )
                 if result.rc != 0:
-                    logger.error(f"Publish failed (rc={result.rc})")
-                else:
-                    logger.debug("Publish OK")
+                    logger.error(f"Stats publish failed (rc={result.rc})")
 
             except Exception:
                 logger.exception("Error in publish_system_stats")
 
-            time.sleep(5)  # 5s between publishes
+            time.sleep(5)

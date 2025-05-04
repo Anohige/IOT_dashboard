@@ -1,15 +1,15 @@
 # main.py
 
 import time
-from dependency_injector import DependencyInjector  # or however you set it up
+from dependency_injector import DependencyInjector
 from agents.rules.rule_agent import RuleAgent
 
 def main():
     print("Initializing dependencies...")
-    di = DependencyInjector()  # This creates MqttClient & FileManager, etc.
+    di = DependencyInjector()
 
     print("Starting MQTT client in non-blocking mode...")
-    di.mqtt_client.connect_and_loop()  # This will call loop_start()
+    di.start_mqtt_client()       # now calls connect_and_loop()
 
     print("Connecting to DAQ...")
     di.start_daq()
@@ -17,30 +17,25 @@ def main():
     print("Starting Server...")
     di.start_server()
 
-    print("Starting modality stats...")
-    #di.start_modality_stats()
-
-    # Create or instantiate your RuleAgent.
-    # (If the agent depends on incoming MQTT data,
-    #  make sure that data is stored or accessible.)
-    agent = RuleAgent(rules_file_path="rules.json")
+    print("Ready to evaluate rules.")
+    agent = RuleAgent(rules_file_path=di.file_manager.rules_file)
 
     try:
         while True:
-            choice = input("Do you want to evaluate rules (Y/N): \n").strip().lower()
+            choice = input("Do you want to evaluate rules (Y/N): ").strip().lower()
             if choice == "y":
-                agent.start()  # load_rules() + evaluate_rules()
+                agent.start()  # loads rules.json + runs your logic
                 print("Rules evaluation done. Sleeping 5 seconds...")
                 time.sleep(5)
             elif choice == "n":
-                print("Ok waiting 10 secs.....")
+                print("Waiting 10 seconds...")
                 time.sleep(10)
             else:
-                print("Invalid input. Please try again.")
+                print("Invalid input. Please type Y or N.")
     except KeyboardInterrupt:
         print("Shutting down...")
 
-        # Stop the MQTT loop gracefully
+        # Cleanly stop MQTT
         di.mqtt_client.client.loop_stop()
         di.mqtt_client.client.disconnect()
         print("MQTT client stopped.")
