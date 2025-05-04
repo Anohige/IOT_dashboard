@@ -1,3 +1,4 @@
+# File_manager.py
 import json
 import os
 import logging
@@ -14,163 +15,102 @@ class FileManager:
     """
 
     def __init__(self, rules_file=None, daq=None):
-        # Set up rules file path
+        # 1) Determine where to store rules.json
         if rules_file is None:
-            # By default, store 'rules.json' in the same directory as file_manager.py
             parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             rules_file = os.path.join(parent_dir, "rules.json")
         self.rules_file = rules_file
 
-        # Store the DAQ instance or create one if not provided
-        self.daq = DAQ()
-        # Get device serial from DAQ
-        self.device_serial = self.daq.serial_number
+        # 2) DAQ is optional; we won’t rely on its serial
+        self.daq = daq or DAQ()
+        # start off with no “known” serial
+        self.device_serial = None
 
         logger.info(f"FileManager initialized. Saving rules to: {self.rules_file}")
-        logger.info(f"Device serial: {self.device_serial or 'Not found'}")
+        logger.info("Device serial will be learned from the first incoming rule.")
+
 
     def append_rule(self, new_rule_obj):
         """
         Append or update a rule in the rules.json file.
 
-        This method expects 'new_rule_obj' to contain:
+        Expects new_rule_obj:
           { "expression": "...", "device_serial": "..." }
-
-        If the device_serial matches our device's serial,
-        we store the rule in the JSON file, replacing any existing rule with
-        the same rule ID or adding it if it's new.
         """
-        # 1) Extract fields
-        received_device_serial = new_rule_obj.get("device_serial", "")
-        expression = new_rule_obj.get("expression", "")
-        rule_id = new_rule_obj.get("rule_id", "default")  # Optional rule ID
+        # 1) Extract incoming fields
+        received_device_serial = new_rule_obj.get("device_serial", "").strip()
+        expression = new_rule_obj.get("expression", "").strip()
 
         if not expression:
-            logger.warning("No 'expression' in rule object. Not appending.")
+            logger.warning("No 'expression' in rule object. Skipping.")
             return False
-
         if not received_device_serial:
-            logger.warning("No 'device_serial' in rule object. Not appending.")
+            logger.warning("No 'device_serial' in rule object. Skipping.")
             return False
 
-        # Compare with quotes stripped if present
-        if isinstance(received_device_serial, str) and received_device_serial.startswith(
-                "'") and received_device_serial.endswith("'"):
-            received_device_serial = received_device_serial[1:-1]
+        # 2) If we haven't yet locked in our serial, adopt this one
+        if self.device_serial is None:
+            self.device_serial = received_device_serial
+            logger.info(f"Adopted device_serial = '{self.device_serial}'")
 
-        # 2) Compare to our device serial
-        if not self.device_serial or received_device_serial != self.device_serial:
+        # 3) If it still doesn't match, skip
+        if received_device_serial != self.device_serial:
             logger.warning(
-                f"Received device_serial='{received_device_serial}' which doesn't match device_serial='{self.device_serial}'. Skipping.")
+                f"Ignoring rule for serial='{received_device_serial}' "
+                f"(we handle '{self.device_serial}')."
+            )
             return False
 
-        # 3) Create a rule object with expression and the optional rule_id
+        # 4) Build the rule structure
         rule_to_store = {"expression": expression}
-        if rule_id != "default":
-            rule_to_store["rule_id"] = rule_id
 
-        # 4) Load existing rules or init empty list
+        # 5) Load existing list (or start fresh)
         existing_rules = self._load_rules()
 
-        # 5) Check if we need to update an existing rule or append a new one
-        if rule_id != "default":
-            # Try to find and update an existing rule with the same ID
-            for i, rule in enumerate(existing_rules):
-                if rule.get("rule_id") == rule_id:
-                    existing_rules[i] = rule_to_store
-                    logger.info(f"Updated existing rule with ID: {rule_id}")
-                    break
-            else:
-                # No matching rule found, so append
-                existing_rules.append(rule_to_store)
-                logger.info(f"Added new rule with ID: {rule_id}")
-        else:
-            # No rule ID specified, so just append as a new rule
-            existing_rules.append(rule_to_store)
-            logger.info(f"Added new rule without ID")
+        # 6) Just append every time (no rule_id logic needed)
+        existing_rules.append(rule_to_store)
+        logger.info("Appending new rule to list")
 
-        # 6) Write the updated list back
-        self._save_rules(existing_rules)
+        # 7) Save back out
+        success = self._save_rules(existing_rules)
+        if success:
+            logger.info(f"Saved {len(existing_rules)} rule(s) to {self.rules_file}")
+        return success
 
-        logger.info(f"Processed rule from device_serial='{received_device_serial}'")
-        return True
 
     def _load_rules(self):
         """Load existing rules from the rules file."""
-        rules_list = []
         if os.path.exists(self.rules_file):
             try:
                 with open(self.rules_file, "r") as f:
                     data = json.load(f)
                 if isinstance(data, list):
-                    rules_list = data
+                    return data
                 else:
-                    logger.warning("WARNING: rules.json was not a list. Reinitializing.")
-            except (json.JSONDecodeError, FileNotFoundError) as e:
-                logger.error(f"Error loading rules file: {e}")
-        return rules_list
+                    logger.warning("rules.json not a list—overwriting.")
+            except Exception as e:
+                logger.error(f"Error reading rules file: {e}")
+        return []
+
 
     def _save_rules(self, rules_list):
-        """Save rules to the rules file."""
+        """Save rules to the rules file, creating directories if needed."""
         try:
-            # Ensure directory exists
             os.makedirs(os.path.dirname(self.rules_file), exist_ok=True)
-
             with open(self.rules_file, "w") as f:
                 json.dump(rules_list, f, indent=2)
-            logger.info(f"Saved {len(rules_list)} rules to {self.rules_file}")
             return True
         except Exception as e:
             logger.error(f"Error saving rules file: {e}")
             return False
 
-    # Add this method to your existing FileManager class
-    # This allows the MQTT client to get the device serial from your FileManager
-
-    def _get_device_serial(self):
-        """
-        Read device serial from the device_info.json file or from the DAQ.
-        Returns the device serial or None if not found.
-        """
-        # First try to use DAQ (for RPi serial) if available
-        try:
-            from DAQ.daq import DAQ
-            daq = DAQ()
-            serial = daq.get_rpi_serial()
-            if serial and serial != "UNKNOWN":
-                return serial
-        except:
-            pass
-
-        # Next try to read from device_info.json
-        try:
-            if os.path.exists(self.device_info_file if hasattr(self, 'device_info_file') else "device_info.json"):
-                with open(self.device_info_file if hasattr(self, 'device_info_file') else "device_info.json", "r") as f:
-                    device_info = json.load(f)
-
-                # Check for device_serial in the file
-                if "device_serial" in device_info:
-                    return device_info["device_serial"]
-        except Exception as e:
-            print(f"Error reading device_info.json: {e}")
-
-        # If we've gotten this far without finding a serial, try to get it from the temp_valid_device_serial
-        if hasattr(self, 'temp_valid_device_serial'):
-            return self.temp_valid_device_serial
-
-        # Last resort
-        return "58969696969"  # Default fallback
 
     def get_rules(self):
-        """
-        Get all rules from the rules file.
-        Returns a list of rule objects.
-        """
+        """Return the current list of rules."""
         return self._load_rules()
 
+
     def clear_rules(self):
-        """
-        Clear all rules from the rules file.
-        """
+        """Erase all rules."""
         self._save_rules([])
-        logger.info("Cleared all rules")
+        logger.info("Cleared all rules.")
