@@ -172,118 +172,45 @@ class MqttClient:
         logger.info("Starting stats publisher thread")
         while True:
             try:
-                # Initialize with empty stats in case we have errors
-                stats = {}
-
-                # Try to get system stats
                 if self.system_stats:
-                    try:
-                        stats = self.system_stats.get_system_stats()
-                        logger.debug(f"Retrieved system stats: {stats}")
-                    except Exception as e:
-                        logger.error(f"Error getting system stats: {e}")
+                    stats = self.system_stats.get_system_stats()
                 else:
-                    logger.warning("System stats object not available")
+                    logger.error("System stats not available")
+                    stats = {}
 
-                # Try to get sensor data - with additional error handling
-                try:
-                    sensor_data = self.daq.get_sensor_data()
-                    logger.info(f"Sensor data retrieved: {sensor_data}")
+                # Get sensor data from DAQ
+                sensor_data = self.daq.get_sensor_data()
 
-                    # Add sensor data to stats
-                    stats["sensor"] = {
-                        "temperature": sensor_data.get("temperature"),
-                        "humidity": sensor_data.get("humidity"),
-                        "status": sensor_data.get("status")
-                    }
-                except Exception as e:
-                    logger.error(f"Error getting sensor data: {e}")
-                    # Add placeholder for sensor data to ensure the structure is consistent
-                    stats["sensor"] = {
-                        "temperature": None,
-                        "humidity": None,
-                        "status": f"error: {str(e)}"
-                    }
+                # Update temperature in the stats directly (not nested)
+                if sensor_data.get("temperature") is not None:
+                    stats["temperature"] = sensor_data.get("temperature")
 
-                # Make sure we always have cpu_usage, ram_usage, and disk_usage for the frontend
-                if "cpu_usage" not in stats:
-                    stats["cpu_usage"] = 0
-                if "ram_usage" not in stats:
-                    stats["ram_usage"] = 0
-                if "disk_usage" not in stats:
-                    stats["disk_usage"] = 0
+                # Add humidity directly to stats (not nested)
+                if sensor_data.get("humidity") is not None:
+                    stats["humidity"] = sensor_data.get("humidity")
 
-                # Also add temperature and humidity at the top level for backward compatibility
-                if "sensor" in stats and stats["sensor"]["temperature"] is not None:
-                    stats["temperature"] = stats["sensor"]["temperature"]
-                else:
-                    stats["temperature"] = 0
-
-                if "sensor" in stats and stats["sensor"]["humidity"] is not None:
-                    stats["humidity"] = stats["sensor"]["humidity"]
-                else:
-                    stats["humidity"] = 0
-
-                # enforce device_serial - prioritize explicitly set serial,
-                # then DAQ serial, then FileManager
+                # enforce device_serial
                 if self.device_serial:
                     stats["device_serial"] = self.device_serial
-                elif hasattr(self.daq,
-                             'serial_number') and self.daq.serial_number and self.daq.serial_number != "UNKNOWN":
-                    stats["device_serial"] = self.daq.serial_number
                 else:
                     # defer to FileManager's learned serial if any
                     stats["device_serial"] = self.file_manager.device_serial or "UNKNOWN"
 
                 stats["timestamp"] = time.time()
+                payload = json.dumps(stats)
 
-                # Check if we have a device serial before publishing
-                if not stats.get("device_serial") or stats["device_serial"] == "UNKNOWN":
-                    logger.warning("No valid device serial found, using 'UNKNOWN'")
-
-                # Convert to JSON with extra error handling
-                try:
-                    payload = json.dumps(stats)
-                except TypeError as e:
-                    logger.error(f"Error converting stats to JSON: {e}")
-                    # Try to create a simplified payload
-                    payload = json.dumps({
-                        "device_serial": stats.get("device_serial", "UNKNOWN"),
-                        "timestamp": time.time(),
-                        "sensor": {
-                            "temperature": 0,
-                            "humidity": 0,
-                            "status": "error: JSON serialization failed"
-                        },
-                        "cpu_usage": 0,
-                        "ram_usage": 0,
-                        "disk_usage": 0,
-                        "temperature": 0,
-                        "humidity": 0
-                    })
-
-                logger.info(f"Publishing to `{self.stats_topic}`: {payload}")
-
-                # Check if client is connected
-                if not self.connected:
-                    logger.error("MQTT client not connected, can't publish")
-                    time.sleep(5)
-                    continue
-
-                # Publish with extra error handling
-                try:
-                    result = self.client.publish(
-                        self.stats_topic, payload, qos=1
-                    )
-                    if result.rc != 0:
-                        logger.error(f"Stats publish failed (rc={result.rc})")
-                    else:
-                        logger.debug("Successfully published stats")
-                except Exception as e:
-                    logger.error(f"Error during MQTT publish: {e}")
+                print(f"Publishing to `{self.stats_topic}`: {payload}")
+                result = self.client.publish(
+                    self.stats_topic, payload, qos=1
+                )
+                if result.rc != 0:
+                    logger.error(f"Stats publish failed (rc={result.rc})")
+                else:
+                    print(
+                        f"Successfully published temperature {stats.get('temperature')}°C and humidity {stats.get('humidity')}%")
 
             except Exception as e:
-                logger.exception(f"Unhandled error in publish_system_stats: {e}")
+                logger.exception(f"Error in publish_system_stats: {e}")
 
             time.sleep(5)
 

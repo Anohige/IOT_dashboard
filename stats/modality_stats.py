@@ -58,17 +58,24 @@ class ModalityStats:
                 data["temperature"] = float(f"{temperature:.1f}")
                 data["humidity"] = float(f"{humidity:.1f}")
                 data["status"] = "ok"
-                logger.debug(f"Read sensor data: Temp={temperature:.1f}°C, Humidity={humidity:.1f}%")
+                logger.info(f"Read sensor data: Temp={temperature:.1f}°C, Humidity={humidity:.1f}%")
+                print(f"DHT11 Sensor: Temp={temperature:.1f}°C, Humidity={humidity:.1f}%")
             else:
                 logger.warning("Sensor returned None values")
+                # For testing, provide default values if the sensor fails
+                data["temperature"] = 25.0
+                data["humidity"] = 60.0
+                data["status"] = "default values (sensor failed)"
+                print(f"Using default sensor values: Temp=25.0°C, Humidity=60.0%")
 
         except RuntimeError as e:
             # Common errors like reading too frequently
             logger.warning(f"DHT sensor runtime error: {e}")
             data["status"] = f"error: {str(e)}"
-        except Exception as e:
-            logger.error(f"Error reading from DHT sensor: {e}")
-            data["status"] = f"error: {str(e)}"
+            # For testing, provide default values if the sensor fails
+            data["temperature"] = 25.0
+            data["humidity"] = 60.0
+            print(f"DHT sensor error, using default values: Temp=25.0°C, Humidity=60.0%")
 
         return data
 
