@@ -10,7 +10,7 @@ import sys
 import paho.mqtt.client as paho_mqtt
 from File_manager.file_manager import FileManager
 from stats.system_stats import SystemStats
-from daq import DAQ
+from DAQ.daq import DAQ
 
 # --- Logging setup ---
 logging.basicConfig(
