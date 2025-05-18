@@ -211,7 +211,7 @@ class MqttClient:
 
                 # Set device serial
                 if self.device_serial:
-                    stats["device_serial"] = self.device_serial
+                    stats["device_serial"] = self.daq.get_rpi_serial()
                 else:
                     stats["device_serial"] = self.file_manager.device_serial or "UNKNOWN"
 
