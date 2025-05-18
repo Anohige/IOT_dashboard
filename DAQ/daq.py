@@ -1,5 +1,5 @@
 from DB_Manager.db_manager import DBManager
-from modality_stats import ModalityStats
+from stats.modality_stats import ModalityStats
 import logging
 
 # Set up logging
