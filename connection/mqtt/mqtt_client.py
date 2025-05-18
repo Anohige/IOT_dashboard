@@ -123,6 +123,8 @@ class MqttClient:
             self.connected = True
             client.subscribe(self.rules_topic, qos=1)
             logger.info(f"Subscribed to rules topic `{self.rules_topic}`")
+            client.subscribe(self.stats_topic, qos=1)
+            logger.info(f"Subscribed to stats topic `{self.stats_topic}`")
         else:
             logger.error(f"Connection refused: {result}")
 
