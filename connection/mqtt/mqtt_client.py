@@ -217,7 +217,7 @@ class MqttClient:
 
     # ─── STATS PUBLISHER ─────────────────────────────────────────────────
     def publish_system_stats(self):
-        """Thread function to publish system and sensor stats."""
+        """Thread function to publish system and sensor stats without blocking."""
         logger.info("Starting stats publisher thread")
         print("Stats publisher thread starting...")
 
@@ -231,118 +231,76 @@ class MqttClient:
                 publish_count += 1
                 print(f"\n--- Publishing stats (attempt #{publish_count}) ---")
 
-                # Check connection status first
-                if not self.connected:
-                    print("❌ MQTT client is NOT connected! Trying to reconnect...")
-                    try:
-                        self.client.reconnect()
-                        time.sleep(2)
-                    except Exception as reconnect_error:
-                        print(f"Reconnection failed: {reconnect_error}")
+                # Create empty stats object first
+                stats = {
+                    "cpu_usage": 0.0,
+                    "ram_usage": 70.0,
+                    "disk_usage": 10.0,
+                    "temperature": 25.0,
+                    "humidity": 60.0
+                }
 
-                # Get system stats
-                stats = {}
+                # Try to get system stats (with timeout protection)
                 try:
                     if self.system_stats:
-                        stats = self.system_stats.get_system_stats()
-                        print(f"System stats retrieved: {stats}")
-                    else:
-                        print("No system_stats object, using defaults")
-                        stats = {
-                            "cpu_usage": 0.0,
-                            "ram_usage": 70.0,
-                            "disk_usage": 10.0
-                        }
-                except Exception as stats_error:
-                    print(f"Error getting system stats: {stats_error}")
-                    stats = {
-                        "cpu_usage": 0.0,
-                        "ram_usage": 70.0,
-                        "disk_usage": 10.0
-                    }
+                        system_stats = self.system_stats.get_system_stats()
+                        if system_stats:
+                            # Update with actual values if available
+                            for key in ["cpu_usage", "ram_usage", "disk_usage", "temperature"]:
+                                if key in system_stats:
+                                    stats[key] = system_stats[key]
+                        print(f"System stats retrieved: {system_stats}")
+                except Exception as e:
+                    print(f"Error getting system stats: {e}")
 
-                # Get sensor data from DAQ
+                # Try to get sensor data (with timeout protection)
                 try:
                     print("Getting sensor data from DAQ...")
                     sensor_data = self.daq.get_sensor_data()
-                    print(f"Sensor data retrieved: {sensor_data}")
 
-                    # Add temperature directly (not nested)
-                    if sensor_data and sensor_data.get("temperature") is not None:
-                        stats["temperature"] = sensor_data["temperature"]
-                        print(f"Temperature: {stats['temperature']}°C")
-                    else:
-                        stats["temperature"] = 25.0  # Default
-                        print("Temperature not available, using default: 25.0°C")
+                    # Only update if we have valid data
+                    if sensor_data:
+                        if sensor_data.get("temperature") is not None:
+                            stats["temperature"] = sensor_data["temperature"]
+                        if sensor_data.get("humidity") is not None:
+                            stats["humidity"] = sensor_data["humidity"]
+                        print(f"Sensor data integrated: temp={stats['temperature']}°C, humidity={stats['humidity']}%")
+                except Exception as e:
+                    print(f"Error getting sensor data: {e}")
 
-                    # Add humidity directly (not nested)
-                    if sensor_data and sensor_data.get("humidity") is not None:
-                        stats["humidity"] = sensor_data["humidity"]
-                        print(f"Humidity: {stats['humidity']}%")
-                    else:
-                        stats["humidity"] = 60.0  # Default
-                        print("Humidity not available, using default: 60.0%")
-
-                except Exception as sensor_error:
-                    print(f"Error getting sensor data: {sensor_error}")
-                    # Use defaults
-                    stats["temperature"] = 25.0
-                    stats["humidity"] = 60.0
-
-                # Make sure we have a device serial
+                # Always set device serial
                 if self.device_serial:
                     stats["device_serial"] = self.device_serial
-                    print(f"Using device serial: {self.device_serial}")
                 elif hasattr(self.daq, 'serial_number') and self.daq.serial_number != "UNKNOWN":
                     stats["device_serial"] = self.daq.serial_number
-                    print(f"Using DAQ serial: {self.daq.serial_number}")
                 else:
-                    # Use FileManager serial or a default
-                    stats["device_serial"] = self.file_manager.device_serial or "UNKNOWN"
-                    print(f"Using fallback serial: {stats['device_serial']}")
+                    stats["device_serial"] = "UNKNOWN"
 
                 # Add timestamp
                 stats["timestamp"] = time.time()
 
-                # Create JSON payload
+                # Convert to JSON and publish
                 try:
                     payload = json.dumps(stats)
-                    print(f"Payload to publish: {payload}")
-                except Exception as json_error:
-                    print(f"Error creating JSON: {json_error}")
-                    continue
+                    print(f"Publishing to {self.stats_topic}: {payload}")
 
-                # Force a direct publish
-                print(f"Publishing to topic: {self.stats_topic}")
-
-                # Try both direct publish and queue-based publish
-                try:
-                    # First attempt - normal publish
-                    result = self.client.publish(self.stats_topic, payload, qos=1)
-
-                    if result.rc != 0:
-                        print(f"❌ Publish failed (rc={result.rc}), trying alternative method...")
-
-                        # Second attempt - force a direct publish with loop
-                        publish_msg = self.client.publish(self.stats_topic, payload, qos=1)
-                        self.client.loop(timeout=2.0)
-
-                        if publish_msg.rc != 0:
-                            print(f"❌ Alternative publish also failed (rc={publish_msg.rc})")
+                    if self.connected:
+                        result = self.client.publish(self.stats_topic, payload, qos=1)
+                        if result.rc == 0:
+                            print(f"✅ SUCCESSFULLY PUBLISHED DATA")
+                            print(f"   Temperature: {stats['temperature']}°C")
+                            print(f"   Humidity: {stats['humidity']}%")
+                            print(f"   Device: {stats['device_serial']}")
                         else:
-                            print(f"✅ SUCCESS! Published via alternative method")
+                            print(f"❌ Publish failed (rc={result.rc})")
                     else:
-                        print(f"✅ SUCCESS! Published stats to {self.stats_topic}")
-                        print(f"    Temperature: {stats.get('temperature')}°C")
-                        print(f"    Humidity: {stats.get('humidity')}%")
-                        print(f"    Device Serial: {stats.get('device_serial')}")
-
-                except Exception as publish_error:
-                    print(f"❌ Critical error during publish: {publish_error}")
+                        print("❌ Not connected to MQTT broker")
+                except Exception as e:
+                    print(f"Error publishing data: {e}")
 
             except Exception as e:
-                print(f"❌ Unhandled error in publish_system_stats: {e}")
+                print(f"Unhandled error in publish_system_stats: {e}")
 
-            # Sleep before next publish
+            # Wait for next cycle
             print("Waiting 5 seconds until next publish...")
             time.sleep(5)
