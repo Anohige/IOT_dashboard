@@ -10,6 +10,7 @@ import sys
 import paho.mqtt.client as paho_mqtt
 from File_manager.file_manager import FileManager
 from stats.system_stats import SystemStats
+from DAQ.daq import DAQ  # Import the DAQ class
 
 # --- Logging setup ---
 logging.basicConfig(
@@ -21,15 +22,15 @@ logger = logging.getLogger(__name__)
 
 class MqttClient:
     def __init__(
-        self,
-        device_serial: str = None,
-        file_manager: FileManager = None,
-        broker: str = "broker.emqx.io",
-        port: int = 1883,
-        use_websockets: bool = False,
-        rules_topic: str = "iot/rules/updated",
-        stats_topic: str = "iot/device/stats",
-        system_stats=None,
+            self,
+            device_serial: str = None,
+            file_manager: FileManager = None,
+            broker: str = "broker.emqx.io",
+            port: int = 1883,
+            use_websockets: bool = False,
+            rules_topic: str = "iot/rules/updated",
+            stats_topic: str = "iot/device/stats",
+            system_stats=None,
     ):
         self.device_serial = device_serial  # optional override
         self.file_manager = FileManager()
@@ -40,12 +41,17 @@ class MqttClient:
         self.stats_topic = stats_topic
         self.system_stats = SystemStats()
 
+        # Initialize DAQ for sensor data
+        self.daq = DAQ()
+
+        # Try to store the device serial in the database
+        self.daq.store_to_db()
+
         self.client_id = f"python_client_{int(time.time())}_{os.getpid()}"
         self.connected = False
 
         self._check_connectivity()
         self._initialize_client()
-
 
     def _check_connectivity(self):
         try:
@@ -62,7 +68,6 @@ class MqttClient:
         except Exception:
             logger.exception("Connectivity check failed")
 
-
     def _initialize_client(self):
         if self.use_websockets:
             self.client = paho_mqtt.Client(
@@ -76,13 +81,12 @@ class MqttClient:
                 client_id=self.client_id, clean_session=True
             )
 
-        self.client.on_connect    = self.on_connect
+        self.client.on_connect = self.on_connect
         self.client.on_disconnect = self.on_disconnect
-        self.client.on_message    = self.on_message
-        self.client.on_subscribe  = self.on_subscribe
-        self.client.on_publish    = self.on_publish
+        self.client.on_message = self.on_message
+        self.client.on_subscribe = self.on_subscribe
+        self.client.on_publish = self.on_publish
         self.client.enable_logger(logger)
-
 
     def connect_and_loop(self):
         """Connect & start loop, then always start stats thread."""
@@ -95,7 +99,7 @@ class MqttClient:
                 if self.connected:
                     break
                 time.sleep(1)
-                logger.info(f"Waiting for CONNACK… {i+1}/10")
+                logger.info(f"Waiting for CONNACK… {i + 1}/10")
             else:
                 logger.error("Failed to connect in 10s")
                 sys.exit(1)
@@ -106,7 +110,6 @@ class MqttClient:
         except Exception:
             logger.exception("Failed to start MQTT loop")
             sys.exit(1)
-
 
     # ─── MQTT CALLBACKS ──────────────────────────────────────────────────
     def on_connect(self, client, userdata, flags, rc):
@@ -123,7 +126,6 @@ class MqttClient:
         else:
             logger.error(f"Connection refused: {result}")
 
-
     def on_disconnect(self, client, userdata, rc):
         self.connected = False
         if rc != 0:
@@ -132,14 +134,11 @@ class MqttClient:
         else:
             logger.info("Clean disconnect")
 
-
     def on_subscribe(self, client, userdata, mid, granted_qos):
         logger.info(f"on_subscribe → mid={mid}, qos={granted_qos}")
 
-
     def on_publish(self, client, userdata, mid):
         logger.debug(f"on_publish → mid={mid}")
-
 
     def on_message(self, client, userdata, msg):
         topic = msg.topic
@@ -148,7 +147,6 @@ class MqttClient:
 
         if topic == self.rules_topic:
             self.handle_rules_message(payload)
-
 
     # ─── RULES HANDLER ───────────────────────────────────────────────────
     def handle_rules_message(self, payload: str):
@@ -167,7 +165,6 @@ class MqttClient:
         except Exception:
             logger.exception("Error handling rules message")
 
-
     # ─── STATS PUBLISHER ─────────────────────────────────────────────────
     def publish_system_stats(self):
         logger.info("Starting stats publisher thread")
@@ -176,13 +173,27 @@ class MqttClient:
                 if self.system_stats:
                     stats = self.system_stats.get_system_stats()
                 else:
-                    print("FAILED")
+                    logger.error("System stats not available")
+                    stats = {}
 
-                # enforce device_serial
+                # Get sensor data from DAQ
+                sensor_data = self.daq.get_sensor_data()
+
+                # Add sensor data to stats
+                stats["sensor"] = {
+                    "temperature": sensor_data.get("temperature"),
+                    "humidity": sensor_data.get("humidity"),
+                    "status": sensor_data.get("status")
+                }
+
+                # enforce device_serial - prioritize explicitly set serial,
+                # then DAQ serial, then FileManager
                 if self.device_serial:
                     stats["device_serial"] = self.device_serial
+                elif self.daq.serial_number and self.daq.serial_number != "UNKNOWN":
+                    stats["device_serial"] = self.daq.serial_number
                 else:
-                    # defer to FileManager’s learned serial if any
+                    # defer to FileManager's learned serial if any
                     stats["device_serial"] = self.file_manager.device_serial or "UNKNOWN"
 
                 stats["timestamp"] = time.time()
@@ -199,3 +210,13 @@ class MqttClient:
                 logger.exception("Error in publish_system_stats")
 
             time.sleep(5)
+
+    def cleanup(self):
+        """Release all resources when done."""
+        try:
+            self.client.loop_stop()
+            self.client.disconnect()
+            self.daq.cleanup()
+            logger.info("MQTT Client resources cleaned up")
+        except Exception as e:
+            logger.error(f"Error during cleanup: {e}")
