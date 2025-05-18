@@ -178,13 +178,14 @@ class MqttClient:
 
                 # Get sensor data from DAQ
                 sensor_data = self.daq.get_sensor_data()
-
+                print(f"{sensor_data}")
                 # Add sensor data to stats
                 stats["sensor"] = {
                     "temperature": sensor_data.get("temperature"),
                     "humidity": sensor_data.get("humidity"),
                     "status": sensor_data.get("status")
                 }
+
 
                 # enforce device_serial - prioritize explicitly set serial,
                 # then DAQ serial, then FileManager

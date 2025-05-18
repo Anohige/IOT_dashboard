@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e71a34ca-43b5-484d-976b-df1fe0f1576e" name="Changes" comment="mod stats">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-    </list>
+    <list default="true" id="e71a34ca-43b5-484d-976b-df1fe0f1576e" name="Changes" comment="mod stats" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -161,14 +159,6 @@
       <workItem from="1746188657802" duration="8696000" />
       <workItem from="1746296245940" duration="7134000" />
       <workItem from="1746365895020" duration="4083000" />
-    </task>
-    <task id="LOCAL-00021" summary="modified modality_stats.py">
-      <option name="closed" value="true" />
-      <created>1742406541596</created>
-      <option name="number" value="00021" />
-      <option name="presentableId" value="LOCAL-00021" />
-      <option name="project" value="LOCAL" />
-      <updated>1742406541596</updated>
     </task>
     <task id="LOCAL-00022" summary="modified modality_stats.py">
       <option name="closed" value="true" />
@@ -554,7 +544,15 @@
       <option name="project" value="LOCAL" />
       <updated>1747592404455</updated>
     </task>
-    <option name="localTasksCounter" value="70" />
+    <task id="LOCAL-00070" summary="mod stats">
+      <option name="closed" value="true" />
+      <created>1747594348014</created>
+      <option name="number" value="00070" />
+      <option name="presentableId" value="LOCAL-00070" />
+      <option name="project" value="LOCAL" />
+      <updated>1747594348014</updated>
+    </task>
+    <option name="localTasksCounter" value="71" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
